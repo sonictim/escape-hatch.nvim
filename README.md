@@ -2,7 +2,7 @@
 
 **The escalating escape system for Neovim**
 
-More escapes = more final actions. A beautifully intuitive keybinding system that scales with your urgency level.
+An intuitive keybinding system that scales with your urgency level.
 
 ## ✨ Features
 
@@ -28,7 +28,7 @@ More escapes = more final actions. A beautifully intuitive keybinding system tha
 ### With [lazy.nvim](https://github.com/folke/lazy.nvim)
 ```lua
 {
-  "your-username/escape-hatch.nvim",
+  "sonictim/escape-hatch.nvim",
   config = function()
     require("escape-hatch").setup()
   end
@@ -38,7 +38,7 @@ More escapes = more final actions. A beautifully intuitive keybinding system tha
 ### With [packer.nvim](https://github.com/wbthomason/packer.nvim)
 ```lua
 use {
-  "your-username/escape-hatch.nvim",
+  "sonictim/escape-hatch.nvim",
   config = function()
     require("escape-hatch").setup()
   end
@@ -120,12 +120,8 @@ Traditional Neovim configs scatter save/quit commands across random keybindings:
 -- Minimal setup (recommended)
 require("escape-hatch").setup()
 
--- Conservative setup (no nuclear option)  
-require("escape-hatch").setup({
-  enable_6_esc = false
-})
 
--- Power user setup (nuclear enabled - no confirmation!)
+-- Enable Nuclear Option
 require("escape-hatch").setup({
   enable_6_esc = true  -- ⚠️ Dangerous!
 })
@@ -149,4 +145,3 @@ MIT
 
 ---
 
-**"More escapes = more final"** - The escape-hatch philosophy
