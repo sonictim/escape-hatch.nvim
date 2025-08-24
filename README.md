@@ -56,9 +56,6 @@ require("escape-hatch").setup({
   enable_5_esc = true,   -- Quit all (safe)
   enable_6_esc = false,  -- Nuclear option (disabled by default for safety)
   
-  -- Safety options
-  confirm_nuclear = true,  -- Show confirmation dialog before force quit all
-  
   -- Custom commands (optional)
   commands = {
     save = ":w<CR>",
@@ -82,13 +79,14 @@ require("escape-hatch").setup({
 
 ## 🚦 Safety First
 
-The **nuclear option** (6 escapes) is **disabled by default** because it's destructive. When enabled, it shows a confirmation dialog by default.
+**Level 5** uses `:qa` which safely prompts you before closing files with unsaved changes.
+
+The **nuclear option** (6 escapes) uses `:qa!` and is **disabled by default** because it immediately force quits everything without any confirmation or protection.
 
 To enable the nuclear option:
 ```lua
 require("escape-hatch").setup({
-  enable_6_esc = true,
-  confirm_nuclear = true  -- Highly recommended!
+  enable_6_esc = true  -- ⚠️ Will force quit without any confirmation!
 })
 ```
 
@@ -127,10 +125,9 @@ require("escape-hatch").setup({
   enable_6_esc = false
 })
 
--- Power user setup (nuclear enabled, no confirmation)
+-- Power user setup (nuclear enabled - no confirmation!)
 require("escape-hatch").setup({
-  enable_6_esc = true,
-  confirm_nuclear = false  -- ⚠️ Dangerous!
+  enable_6_esc = true  -- ⚠️ Dangerous!
 })
 
 -- Custom commands

@@ -1,5 +1,6 @@
 -- escape-hatch.nvim
 -- The escalating escape system for Neovim
+-- More escapes = more final actions
 
 local M = {}
 
@@ -11,9 +12,6 @@ local default_config = {
 	enable_4_esc = true, -- Quit (safe)
 	enable_5_esc = true, -- Quit all (safe)
 	enable_6_esc = false, -- Force quit all (nuclear - disabled by default)
-
-	-- Safety options
-	confirm_nuclear = true, -- Confirm before force quit all
 
 	-- Custom commands (optional overrides)
 	commands = {
@@ -37,16 +35,10 @@ local default_config = {
 
 local config = {}
 
--- Nuclear option with confirmation
+-- Nuclear option - force quit all without confirmation
+-- If you want confirmation, just use level 5 (:qa) which has built-in protection
 local function nuclear_option()
-	if config.confirm_nuclear then
-		local choice = vim.fn.confirm("🔥 NUCLEAR OPTION 🔥\nForce quit ALL and discard changes?", "&Yes\n&No", 2)
-		if choice == 1 then
-			vim.cmd("qa!")
-		end
-	else
-		vim.cmd("qa!")
-	end
+	vim.cmd("qa!")
 end
 
 -- Set up keymaps based on configuration
@@ -120,10 +112,7 @@ function M.setup(user_config)
 
 	print("🚀 escape-hatch.nvim loaded! Enabled levels: " .. table.concat(enabled_levels, ", "))
 	if config.enable_6_esc then
-		print(
-			"⚠️  Nuclear option enabled"
-				.. (config.confirm_nuclear and " (with confirmation)" or " (no confirmation)")
-		)
+		print("⚠️  Nuclear option enabled - 6 escapes will force quit without confirmation!")
 	end
 end
 
