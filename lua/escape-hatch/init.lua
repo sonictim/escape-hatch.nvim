@@ -58,6 +58,12 @@ local function setup_keymaps()
 			{ desc = "Exit insert & " .. config.descriptions.level_2:lower() }
 		)
 		vim.keymap.set("n", "<Esc><Esc>", function()
+			local filetype = vim.bo.filetype
+
+			-- Do absolutely nothing for Telescope - let it handle its own escaping
+			if filetype == "TelescopePrompt" then
+				return -- Exit early, no action
+			end
 			local buftype = vim.bo.buftype
 
 			if buftype == "" then
