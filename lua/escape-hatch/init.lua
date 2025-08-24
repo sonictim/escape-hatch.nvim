@@ -82,6 +82,20 @@ local function telescope_close_any()
 	end)
 	return true
 end
+local function smart_save()
+	-- Make sure we're in normal mode
+	if vim.fn.mode() ~= "n" then
+		vim.cmd("stopinsert")
+	end
+
+	local name = vim.api.nvim_buf_get_name(0)
+	if name == "" and vim.bo.buftype == "" then
+		-- unnamed buffer → prefill :saveas
+		vim.api.nvim_feedkeys(":" .. "saveas ", "c", false)
+	else
+		vim.cmd("w")
+	end
+end
 
 local function smart_save_quit()
 	local name = vim.api.nvim_buf_get_name(0)
@@ -102,27 +116,33 @@ end, {})
 local function setup_keymaps()
 	-- level 2: save / exit terminal
 	if config.enable_2_esc then
-		vim.keymap.set(
-			"t",
-			"<esc><esc>",
-			config.commands.exit_terminal, -- fixed: just the string
-			{ desc = config.descriptions.level_2 }
-		)
-		vim.keymap.set("i", "<Esc><Esc>", function()
+		vim.keymap.set({ "i", "t", "v", "n" }, "<Esc><Esc>", function()
 			if telescope_close_any() then
 				return
 			end
-			local command = "<Esc>:" .. config.commands.save .. "<CR>"
-			vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(command, true, false, true), "n", true)
-		end, { desc = "Exit insert & smart save/close" })
-
-		-- Normal mode: Level 2
-		vim.keymap.set("n", "<Esc><Esc>", function()
-			if telescope_close_any() then
-				return
-			end
-			vim.cmd(vim.bo.buftype == "" and config.commands.save or "q")
-		end, { desc = "Smart save/close" })
+			smart_save()
+		end, { desc = "Smart Save/Close" })
+		-- vim.keymap.set(
+		-- 	"t",
+		-- 	"<esc><esc>",
+		-- 	config.commands.exit_terminal, -- fixed: just the string
+		-- 	{ desc = config.descriptions.level_2 }
+		-- )
+		-- vim.keymap.set("i", "<Esc><Esc>", function()
+		-- 	if telescope_close_any() then
+		-- 		return
+		-- 	end
+		-- 	local command = "<Esc>:" .. config.commands.save .. "<CR>"
+		-- 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(command, true, false, true), "n", true)
+		-- end, { desc = "Exit insert & smart save/close" })
+		--
+		-- -- Normal mode: Level 2
+		-- vim.keymap.set("n", "<Esc><Esc>", function()
+		-- 	if telescope_close_any() then
+		-- 		return
+		-- 	end
+		-- 	vim.cmd(vim.bo.buftype == "" and config.commands.save or "q")
+		-- end, { desc = "Smart save/close" })
 	end
 
 	-- Level 3: Save & quit
