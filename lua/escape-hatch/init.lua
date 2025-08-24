@@ -110,10 +110,10 @@ function M.setup(user_config)
 		end
 	end
 
-	print("🚀 escape-hatch.nvim loaded! Enabled levels: " .. table.concat(enabled_levels, ", "))
-	if config.enable_6_esc then
-		print("⚠️  Nuclear option enabled - 6 escapes will force quit without confirmation!")
-	end
+	-- print("🚀 escape-hatch.nvim loaded! Enabled levels: " .. table.concat(enabled_levels, ", "))
+	-- if config.enable_6_esc then
+	-- 	print("⚠️  Nuclear option enabled - 6 escapes will force quit without confirmation!")
+	-- end
 end
 
 -- Utility function to show current config
