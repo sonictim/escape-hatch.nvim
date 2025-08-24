@@ -65,7 +65,7 @@ local function setup_keymaps()
 		vim.keymap.set("i", "<Esc><Esc>", function()
 			print("INSERT MODE ESCAPE ESCAPE TRIGGERED!") -- Add this line
 
-			local command = is_telescope_buffer() and "<Esc><Esc>" or "<Esc>:" .. config.commands.save .. "<CR>"
+			local command = is_telescope_buffer() and "<Esc><Esc><Esc>" or "<Esc>:" .. config.commands.save .. "<CR>"
 
 			vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(command, true, false, true), "n", true)
 		end, { desc = "Exit insert & smart save/close" })
@@ -73,7 +73,7 @@ local function setup_keymaps()
 			print("NORMAL MODE ESCAPE ESCAPE TRIGGERED!") -- Add this line
 
 			if is_telescope_buffer() then
-				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
+				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc><Esc>", true, false, true), "n", true)
 			else
 				vim.cmd(vim.bo.buftype == "" and config.commands.save or "q")
 			end
