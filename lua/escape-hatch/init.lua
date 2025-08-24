@@ -59,10 +59,15 @@ local function setup_keymaps()
 		)
 		vim.keymap.set("n", "<Esc><Esc>", function()
 			local filetype = vim.bo.filetype
+			local buftype = vim.bo.buftype
 			local bufname = vim.api.nvim_buf_get_name(0)
+
+			-- Debug print to see what we're detecting
+			print("DEBUG: filetype='" .. filetype .. "', buftype='" .. buftype .. "', bufname='" .. bufname .. "'")
 
 			-- Skip all Telescope buffers entirely
 			if filetype == "TelescopePrompt" or bufname:match("Telescope") then
+				print("DEBUG: Telescope detected, returning early")
 				return -- Do nothing
 			end
 			local buftype = vim.bo.buftype
