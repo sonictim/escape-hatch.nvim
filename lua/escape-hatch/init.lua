@@ -41,41 +41,36 @@ local function nuclear_option()
 	vim.cmd("qa!")
 end
 
--- Set up keymaps based on configuration
+local function is_telescope_buffer()
+	local bufname = vim.api.nvim_buf_get_name(0)
+	local filetype = vim.bo.filetype
+	local result = filetype == "TelescopePrompt" or bufname:match("[Tt]elescope") or bufname:match("telescope://")
+	if result then
+		print("Telescope Detected")
+	else
+		print("No Telescope")
+	end
+end
+-- set up keymaps based on configuration
 local function setup_keymaps()
-	-- Level 2: Save / Exit terminal
+	-- level 2: save / exit terminal
 	if config.enable_2_esc then
 		vim.keymap.set(
 			"t",
-			"<Esc><Esc>",
-			config.commands.exit_terminal, -- Fixed: just the string
+			"<esc><esc>",
+			config.commands.exit_terminal, -- fixed: just the string
 			{ desc = config.descriptions.level_2 }
 		)
-		vim.keymap.set(
-			"i",
-			"<Esc><Esc>",
-			"<Esc>:" .. config.commands.save .. "<CR>", -- Fixed: build the command string
-			{ desc = "Exit insert & " .. config.descriptions.level_2:lower() }
-		)
+		vim.keymap.set("i", "<Esc><Esc>", function()
+			local command = is_telescope_buffer() and "<Esc><Esc>" or "<Esc>:" .. config.commands.save .. "<CR>"
+
+			vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(command, true, false, true), "n", true)
+		end, { desc = "Exit insert & smart save/close" })
 		vim.keymap.set("n", "<Esc><Esc>", function()
-			local filetype = vim.bo.filetype
-			local buftype = vim.bo.buftype
-			local bufname = vim.api.nvim_buf_get_name(0)
-
-			-- Debug print to see what we're detecting
-			print("DEBUG: filetype='" .. filetype .. "', buftype='" .. buftype .. "', bufname='" .. bufname .. "'")
-
-			-- Skip all Telescope buffers entirely
-			if filetype == "TelescopePrompt" or bufname:match("Telescope") then
-				print("DEBUG: Telescope detected, returning early")
-				return -- Do nothing
-			end
-			local buftype = vim.bo.buftype
-
-			if buftype == "" then
-				vim.cmd(config.commands.save) -- Fixed: use the variable
+			if is_telescope_buffer() then
+				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
 			else
-				vim.cmd("q") -- Fixed: hardcode "q" for special buffers
+				vim.cmd(vim.bo.buftype == "" and config.commands.save or "q")
 			end
 		end, { desc = "Smart save/close" })
 	end
