@@ -82,22 +82,31 @@ local function telescope_close_any()
 	end)
 	return true
 end
+
 local function smart_save()
+	-- leave insert/terminal mode
 	if vim.fn.mode() ~= "n" then
 		vim.cmd("stopinsert")
 	end
 
 	local name = vim.api.nvim_buf_get_name(0)
-	if name == "" and vim.bo.buftype == "" then
+	local buftype = vim.bo.buftype
+
+	if buftype ~= "" then
+		-- special buffer → just quit (no save needed)
+		vim.cmd("q")
+	elseif name == "" then
+		-- unnamed normal buffer → prefill :saveas
 		vim.api.nvim_feedkeys(":" .. "saveas ", "c", false)
 	else
+		-- named normal buffer → save normally
 		vim.cmd(config.commands.save)
 	end
 end
 
 local function smart_save_quit()
 	local name = vim.api.nvim_buf_get_name(0)
-	if name == "" or vim.bo.buftype == "" then
+	if name == "" and vim.bo.buftype == "" then
 		vim.cmd("q")
 	else
 		vim.cmd(config.commands.save_quit)
@@ -113,7 +122,8 @@ end, {})
 local function setup_keymaps()
 	-- level 2: save / exit terminal
 	if config.enable_2_esc then
-		vim.keymap.set({ "i", "t", "v", "n" }, "<Esc><Esc>", function()
+		vim.keymap.set("t", "<Esc><Esc>", config.commands.exit_terminal, { desc = "Exit terminal" })
+		vim.keymap.set({ "i", "v", "n" }, "<Esc><Esc>", function()
 			if telescope_close_any() then
 				return
 			end
