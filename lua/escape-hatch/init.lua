@@ -45,11 +45,11 @@ local function is_telescope_buffer()
 	local bufname = vim.api.nvim_buf_get_name(0)
 	local filetype = vim.bo.filetype
 	local result = filetype == "TelescopePrompt" or bufname:match("[Tt]elescope") or bufname:match("telescope://")
-	if result then
-		print("Telescope Detected")
-	else
-		print("No Telescope")
-	end
+	-- if result then
+	-- 	print("Telescope Detected")
+	-- else
+	-- 	print("No Telescope")
+	-- end
 	return result
 end
 -- set up keymaps based on configuration
