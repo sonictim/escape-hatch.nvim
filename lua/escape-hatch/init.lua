@@ -97,7 +97,7 @@ end
 
 local function smart_save_quit()
 	local name = vim.api.nvim_buf_get_name(0)
-	if name == "" and vim.bo.buftype == "" then
+	if name == "" or vim.bo.buftype == "" then
 		vim.cmd("q")
 	else
 		vim.cmd(config.commands.save_quit)
