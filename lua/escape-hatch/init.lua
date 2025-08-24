@@ -83,6 +83,15 @@ local function telescope_close_any()
 	return true
 end
 
+local function smart_save_quit()
+	local name = vim.api.nvim_buf_get_name(0)
+	if name == "" and vim.bo.buftype == "" then
+		-- unnamed "normal" buffer → quit, let nvim handle save prompt
+		vim.cmd("q")
+	else
+		vim.cmd("wq")
+	end
+end
 -- Optional: user command so you can do :TelescopeClose
 vim.api.nvim_create_user_command("TelescopeClose", function()
 	if not telescope_close_any() then
@@ -117,13 +126,11 @@ local function setup_keymaps()
 	end
 
 	-- Level 3: Save & quit
+
 	if config.enable_3_esc then
-		vim.keymap.set(
-			{ "i", "n", "v" },
-			"<Esc><Esc><Esc>",
-			"<Esc>:" .. config.commands.save_quit .. "<CR>", -- Fixed
-			{ desc = config.descriptions.level_3 }
-		)
+		vim.keymap.set({ "i", "n", "v" }, "<Esc><Esc><Esc>", function()
+			smart_save_quit()
+		end, { desc = config.descriptions.level_3 })
 	end
 
 	-- Level 4: Quit (safe)
