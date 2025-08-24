@@ -9,6 +9,7 @@ An intuitive keybinding system that scales with your urgency level.
 - **Intuitive escalation**: The more escapes you press, the more "final" the action
 - **Universal**: Works across all modes (normal, insert, visual, terminal)  
 - **Safe by default**: Destructive actions require more deliberate keypresses
+- **Smart context**: Level 2 saves files or closes UI windows (help, Lazy, Telescope, etc.)
 - **Configurable**: Enable/disable levels, customize commands, add confirmations
 - **No conflicts**: Preserves all built-in Vim behaviors
 
@@ -17,7 +18,7 @@ An intuitive keybinding system that scales with your urgency level.
 | Escapes | Action | Description |
 |---------|--------|-------------|
 | **1** | Built-in | Clear search highlight / Exit mode |
-| **2** | Save | Save file / Exit terminal mode |
+| **2** | Save / Smart Close | Save file OR close UI windows (help, Lazy, etc.) |
 | **3** | Save & Quit | Save current file and close it |
 | **4** | Quit | Close current file (with unsaved warning) |
 | **5** | Quit All | Close all files (with unsaved warnings) |
@@ -58,17 +59,17 @@ require("escape-hatch").setup({
   
   -- Custom commands (optional)
   commands = {
-    save = ":w<CR>",
-    save_quit = ":wq<CR>",
-    quit = ":q<CR>",
-    quit_all = ":qa<CR>",
-    force_quit_all = ":qa!<CR>",
+    save = "w",
+    save_quit = "wq",
+    quit = "q",
+    quit_all = "qa",
+    force_quit_all = "qa!",
     exit_terminal = "<C-\\><C-n>"
   },
   
   -- Custom descriptions
   descriptions = {
-    level_2 = "Save / Exit terminal",
+    level_2 = "Save / Exit Terminal",
     level_3 = "Save & Quit", 
     level_4 = "Quit",
     level_5 = "Quit All",
@@ -125,12 +126,11 @@ require("escape-hatch").setup()
 require("escape-hatch").setup({
   enable_6_esc = true  -- ⚠️ Dangerous!
 })
-
 -- Custom commands
 require("escape-hatch").setup({
   commands = {
-    save = ":update<CR>",  -- Only save if buffer was modified
-    quit_all = ":qall<CR>" -- Alternative to :qa
+    save = "update",    -- Only save if buffer was modified (fixed)
+    quit_all = "qall"   -- Alternative to qa (fixed)
   }
 })
 ```

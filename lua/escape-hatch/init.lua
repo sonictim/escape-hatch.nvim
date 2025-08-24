@@ -15,12 +15,12 @@ local default_config = {
 
 	-- Custom commands (optional overrides)
 	commands = {
-		save = ":w<CR>",
-		save_quit = ":wq<CR>",
-		quit = ":q<CR>",
-		quit_all = ":qa<CR>",
-		force_quit_all = ":qa!<CR>",
-		exit_terminal = "<C-\\><C-n>",
+		save = "w", -- Changed from ":w<CR>" to just "w"
+		save_quit = "wq", -- Changed from ":wq<CR>" to just "wq"
+		quit = "q", -- Changed from ":q<CR>" to just "q"
+		quit_all = "qa", -- Changed from ":qa<CR>" to just "qa"
+		force_quit_all = "qa!", -- Changed from ":qa!<CR>" to just "qa!"
+		exit_terminal = "<C-\\><C-n>", -- This one stays the same
 	},
 
 	-- Descriptions for which-key integration
@@ -45,14 +45,27 @@ end
 local function setup_keymaps()
 	-- Level 2: Save / Exit terminal
 	if config.enable_2_esc then
-		vim.keymap.set("t", "<Esc><Esc>", config.commands.exit_terminal, { desc = config.descriptions.level_2 })
+		vim.keymap.set(
+			"t",
+			"<Esc><Esc>",
+			config.commands.exit_terminal, -- Fixed: just the string
+			{ desc = config.descriptions.level_2 }
+		)
 		vim.keymap.set(
 			"i",
 			"<Esc><Esc>",
-			"<Esc>" .. config.commands.save,
+			"<Esc>:" .. config.commands.save .. "<CR>", -- Fixed: build the command string
 			{ desc = "Exit insert & " .. config.descriptions.level_2:lower() }
 		)
-		vim.keymap.set("n", "<Esc><Esc>", config.commands.save, { desc = config.descriptions.level_2 })
+		vim.keymap.set("n", "<Esc><Esc>", function()
+			local buftype = vim.bo.buftype
+
+			if buftype == "" then
+				vim.cmd(config.commands.save) -- Fixed: use the variable
+			else
+				vim.cmd("q") -- Fixed: hardcode "q" for special buffers
+			end
+		end, { desc = "Smart save/close" })
 	end
 
 	-- Level 3: Save & quit
@@ -60,7 +73,7 @@ local function setup_keymaps()
 		vim.keymap.set(
 			{ "i", "n", "v" },
 			"<Esc><Esc><Esc>",
-			"<Esc>" .. config.commands.save_quit,
+			"<Esc>:" .. config.commands.save_quit .. "<CR>", -- Fixed
 			{ desc = config.descriptions.level_3 }
 		)
 	end
@@ -70,7 +83,7 @@ local function setup_keymaps()
 		vim.keymap.set(
 			{ "i", "n", "v" },
 			"<Esc><Esc><Esc><Esc>",
-			"<Esc>" .. config.commands.quit,
+			"<Esc>:" .. config.commands.quit .. "<CR>", -- Fixed: same pattern as level 3
 			{ desc = config.descriptions.level_4 }
 		)
 	end
@@ -80,11 +93,10 @@ local function setup_keymaps()
 		vim.keymap.set(
 			{ "i", "n", "v" },
 			"<Esc><Esc><Esc><Esc><Esc>",
-			"<Esc>" .. config.commands.quit_all,
+			"<Esc>:" .. config.commands.quit_all .. "<CR>", -- Fixed: same pattern as level 3
 			{ desc = config.descriptions.level_5 }
 		)
 	end
-
 	-- Level 6: Nuclear option
 	if config.enable_6_esc then
 		vim.keymap.set({ "i", "n", "v" }, "<Esc><Esc><Esc><Esc><Esc><Esc>", function()
