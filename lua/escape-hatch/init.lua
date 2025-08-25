@@ -104,6 +104,11 @@ local function smart_close()
 		return -- Telescope closed, we're done
 	end
 
+	-- Step 2.5: Close any non editable buffers
+	if vim.bo.buftype ~= "" then
+		vim.cmd("q") -- Special buffer, just quit
+	end
+
 	-- Step 3: Close floating windows
 	for _, win in ipairs(vim.api.nvim_list_wins()) do
 		local config = vim.api.nvim_win_get_config(win)
@@ -118,11 +123,7 @@ end
 
 local function smart_save()
 	local name = vim.api.nvim_buf_get_name(0)
-	local buftype = vim.bo.buftype
-
-	if buftype ~= "" then
-		vim.cmd("q") -- Special buffer, just quit
-	elseif name == "" then
+	if name == "" then
 		vim.api.nvim_feedkeys(":" .. "saveas ", "c", false) -- Unnamed buffer
 	else
 		vim.cmd(config.commands.save) -- Normal file

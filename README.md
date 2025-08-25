@@ -4,6 +4,10 @@
 
 An intuitive keybinding system that scales with your urgency level.
 
+> **Finally! A way to quit Vim that doesn't require a Stack Overflow search.** 
+> 
+> We've all been there: trapped in Vim, mashing keys, trying `:exit`, `:leave`, `:please-let-me-out`. Those days are over. Now you just press Escape until you're free. The more desperate you get, the more escapes you press, and eventually you'll break free. It's like a panic button that scales with your panic level.
+
 ## ✨ Features
 
 - **Mode agnostic**: Every escape level works from any mode (insert, visual, terminal, normal)
