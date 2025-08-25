@@ -63,6 +63,9 @@ require("escape-hatch").setup({
   enable_5_esc = true,   -- Escape + Quit All (safe)
   enable_6_esc = false,  -- Nuclear option (disabled by default for safety)
   
+  -- Behavior options
+  close_all_special_buffers = false,  -- Close all help/quickfix/etc buffers on single escape
+  
   -- Custom commands (optional)
   commands = {
     save = "w",

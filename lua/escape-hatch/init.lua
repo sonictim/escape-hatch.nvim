@@ -13,6 +13,7 @@ local default_config = {
 	enable_4_esc = true, -- Quit (safe)
 	enable_5_esc = true, -- Quit all (safe)
 	enable_6_esc = false, -- Force quit all (nuclear - disabled by default)
+	close_all_special_buffers = false,
 
 	-- Custom commands (optional overrides)
 	commands = {
@@ -105,8 +106,18 @@ local function smart_close()
 	end
 
 	-- Step 2.5: Close any non editable buffers
-	if vim.bo.buftype ~= "" then
-		vim.cmd("q") -- Special buffer, just quit
+	if config.close_all_special_buffers then
+		-- Close ALL special buffers
+		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+			if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype ~= "" then
+				vim.api.nvim_buf_delete(buf, { force = true }) -- Force to handle modified buffers
+			end
+		end
+	else
+		-- Close current buffer if it's special
+		if vim.bo.buftype ~= "" then
+			vim.api.nvim_buf_delete(0, { force = true }) -- 0 = current buffer
+		end
 	end
 
 	-- Step 3: Close floating windows
