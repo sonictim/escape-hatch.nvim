@@ -88,6 +88,25 @@ require("escape-hatch").setup({
     }
 })
 ```
+## ⚠️ Multi-Key Sequence Behavior
+
+Due to Neovim's keymap system, there is a brief delay (controlled by `timeoutlen`) when pressing single escape while the system waits to see if you'll press additional escapes. This is unavoidable with multi-level key sequences.
+
+**To reduce the delay:**
+```lua
+-- Set a shorter timeout globally (affects all multi-key sequences)
+vim.o.timeoutlen = 100  -- Default is usually 1000ms
+
+require("escape-hatch").setup({
+  -- your config
+})
+```
+
+**Trade-offs:**
+- **Shorter timeout**: Faster escape response, but other multi-key mappings (like `<leader>` sequences) will also timeout faster
+- **Default timeout**: Longer escape delay, but preserves your existing keymap timing
+
+This behavior is fundamental to how Vim/Neovim processes ambiguous key sequences and cannot be avoided while maintaining the escalation system.
 
 ## 🚦 Safety First
 
