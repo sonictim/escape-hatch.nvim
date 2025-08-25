@@ -103,6 +103,7 @@ local function telescope_close_any()
 end
 
 local function smart_close()
+	print("smart close called")
 	-- Handle completion popups first, before any mode changes
 	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
