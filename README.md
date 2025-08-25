@@ -17,7 +17,7 @@ An intuitive keybinding system that scales with your urgency level.
 
 | Escapes | Action | Description |
 |---------|--------|-------------|
-| **1** | Built-in | Clear search highlight / Exit mode |
+| **1** | Exit / Clear UI | Exit mode + Clear Search + Close Floats |
 | **2** | Save / Smart Close | Save file OR close UI windows (help, Lazy, etc.) |
 | **3** | Save & Quit | Save current file and close it |
 | **4** | Quit | Close current file (with unsaved warning) |
@@ -51,6 +51,7 @@ use {
 ```lua
 require("escape-hatch").setup({
   -- Enable/disable specific escape levels
+  enable_1_esc = true,   -- Exit Mode / Clear UI
   enable_2_esc = true,   -- Save / Exit terminal
   enable_3_esc = true,   -- Save & quit
   enable_4_esc = true,   -- Quit (safe)
@@ -69,6 +70,7 @@ require("escape-hatch").setup({
   
   -- Custom descriptions
   descriptions = {
+    level_1 = "Exit Mode / Clear UI",
     level_2 = "Save / Exit Terminal",
     level_3 = "Save & Quit", 
     level_4 = "Quit",

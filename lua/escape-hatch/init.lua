@@ -7,6 +7,7 @@ local M = {}
 -- Default configuration
 local default_config = {
 	-- Enable/disable specific escape levels
+	enable_1_esc = true,
 	enable_2_esc = true, -- Save / Exit terminal
 	enable_3_esc = true, -- Save & quit
 	enable_4_esc = true, -- Quit (safe)
@@ -25,6 +26,7 @@ local default_config = {
 
 	-- Descriptions for which-key integration
 	descriptions = {
+		level_1 = "Clear Highlights and Close Floats",
 		level_2 = "Save / Exit terminal",
 		level_3 = "Save & Quit",
 		level_4 = "Quit",
@@ -112,7 +114,20 @@ local function smart_save_quit()
 		vim.cmd(config.commands.save_quit)
 	end
 end
--- Optional: user command so you can do :TelescopeClose
+
+local function clear_ui()
+	-- Close all floating windows
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		local config = vim.api.nvim_win_get_config(win)
+		if config.relative ~= "" then
+			vim.api.nvim_win_close(win, true)
+		end
+	end
+
+	-- Clear search highlighting
+	vim.cmd("nohlsearch")
+end
+
 vim.api.nvim_create_user_command("TelescopeClose", function()
 	if not telescope_close_any() then
 		vim.notify("No Telescope picker to close", vim.log.levels.INFO)
@@ -120,6 +135,9 @@ vim.api.nvim_create_user_command("TelescopeClose", function()
 end, {})
 -- set up keymaps based on configuration
 local function setup_keymaps()
+	if config.enable_1_esc then
+		vim.keymap.set("n", "<Esc>", clear_ui, { desc = "Clear highlights and Close Floats" })
+	end
 	-- level 2: save / exit terminal
 	if config.enable_2_esc then
 		vim.keymap.set("t", "<Esc><Esc>", config.commands.exit_terminal, { desc = "Exit terminal" })
@@ -129,27 +147,6 @@ local function setup_keymaps()
 			end
 			smart_save()
 		end, { desc = "Smart Save/Close" })
-		-- vim.keymap.set(
-		-- 	"t",
-		-- 	"<esc><esc>",
-		-- 	config.commands.exit_terminal, -- fixed: just the string
-		-- 	{ desc = config.descriptions.level_2 }
-		-- )
-		-- vim.keymap.set("i", "<Esc><Esc>", function()
-		-- 	if telescope_close_any() then
-		-- 		return
-		-- 	end
-		-- 	local command = "<Esc>:" .. config.commands.save .. "<CR>"
-		-- 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(command, true, false, true), "n", true)
-		-- end, { desc = "Exit insert & smart save/close" })
-		--
-		-- -- Normal mode: Level 2
-		-- vim.keymap.set("n", "<Esc><Esc>", function()
-		-- 	if telescope_close_any() then
-		-- 		return
-		-- 	end
-		-- 	vim.cmd(vim.bo.buftype == "" and config.commands.save or "q")
-		-- end, { desc = "Smart save/close" })
 	end
 
 	-- Level 3: Save & quit
@@ -198,26 +195,20 @@ function M.setup(user_config)
 
 	-- Print setup confirmation
 	local enabled_levels = {}
-	for i = 2, 6 do
+	for i = 1, 6 do -- Changed from "for i = 2, 6"
 		if config["enable_" .. i .. "_esc"] then
 			table.insert(enabled_levels, i)
 		end
 	end
-
-	-- print("🚀 escape-hatch.nvim loaded! Enabled levels: " .. table.concat(enabled_levels, ", "))
-	-- if config.enable_6_esc then
-	-- 	print("⚠️  Nuclear option enabled - 6 escapes will force quit without confirmation!")
-	-- end
 end
 
 -- Utility function to show current config
 function M.show_config()
 	print("📋 escape-hatch.nvim configuration:")
-	print("  Level 1 (1 esc): Built-in (clear search/exit mode)")
-	for i = 2, 6 do
+	for i = 1, 6 do -- Changed from "for i = 2, 6" to include level 1
 		local enabled = config["enable_" .. i .. "_esc"]
 		local status = enabled and "✅" or "❌"
-		local desc = config.descriptions["level_" .. i]
+		local desc = config.descriptions["level_" .. i] or "Built-in"
 		print("  Level " .. i .. " (" .. i .. " esc): " .. status .. " " .. desc)
 	end
 end
