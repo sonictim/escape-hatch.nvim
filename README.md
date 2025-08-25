@@ -34,20 +34,20 @@ An intuitive keybinding system that scales with your urgency level.
 ### With [lazy.nvim](https://github.com/folke/lazy.nvim)
 ```lua
 {
-  "sonictim/escape-hatch.nvim",
-  config = function()
-    require("escape-hatch").setup()
-  end
+    "sonictim/escape-hatch.nvim",
+    config = function()
+        require("escape-hatch").setup()
+    end
 }
 ```
 
 ### With [packer.nvim](https://github.com/wbthomason/packer.nvim)
 ```lua
 use {
-  "sonictim/escape-hatch.nvim",
-  config = function()
-    require("escape-hatch").setup()
-  end
+    "sonictim/escape-hatch.nvim",
+    config = function()
+        require("escape-hatch").setup()
+    end
 }
 ```
 
@@ -55,36 +55,36 @@ use {
 
 ```lua
 require("escape-hatch").setup({
-  -- Enable/disable specific escape levels
-  enable_1_esc = true,   -- Escape (exit mode + clear UI)
-  enable_2_esc = true,   -- Escape + Save
-  enable_3_esc = true,   -- Escape + Save + Quit
-  enable_4_esc = true,   -- Escape + Quit (safe)
-  enable_5_esc = true,   -- Escape + Quit All (safe)
-  enable_6_esc = false,  -- Nuclear option (disabled by default for safety)
-  
-  -- Behavior options
-  close_all_special_buffers = false,  -- Close all help/quickfix/etc buffers on single escape
-  
-  -- Custom commands (optional)
-  commands = {
-    save = "w",
-    save_quit = "wq",
-    quit = "q",
-    quit_all = "qa",
-    force_quit_all = "qa!",
-    exit_terminal = "<C-\\><C-n>"
-  },
-  
-  -- Custom descriptions
-  descriptions = {
-    level_1 = "Escape",
-    level_2 = "Escape + Save",
-    level_3 = "Escape + Save + Quit", 
-    level_4 = "Escape + Quit",
-    level_5 = "Escape + Quit All",
-    level_6 = "Escape + Force Quit All"
-  }
+    -- Enable/disable specific escape levels
+    enable_1_esc = true,   -- Escape (exit mode + clear UI)
+    enable_2_esc = true,   -- Escape + Save
+    enable_3_esc = true,   -- Escape + Save + Quit
+    enable_4_esc = true,   -- Escape + Quit (safe)
+    enable_5_esc = true,   -- Escape + Quit All (safe)
+    enable_6_esc = false,  -- Nuclear option (disabled by default for safety)
+
+    -- Behavior options
+    close_all_special_buffers = false,  -- Close all help/quickfix/etc buffers on single escape
+
+    -- Custom commands (optional)
+    commands = {
+        save = "w",
+        save_quit = "wq",
+        quit = "q",
+        quit_all = "qa",
+        force_quit_all = "qa!",
+        exit_terminal = "<C-\\><C-n>"
+    },
+
+    -- Custom descriptions
+    descriptions = {
+        level_1 = "Escape",
+        level_2 = "Escape + Save",
+        level_3 = "Escape + Save + Quit", 
+        level_4 = "Escape + Quit",
+        level_5 = "Escape + Quit All",
+        level_6 = "Escape + Force Quit All"
+    }
 })
 ```
 
@@ -97,7 +97,7 @@ The **nuclear option** (6 escapes) uses `:qa!` and is **disabled by default** be
 To enable the nuclear option:
 ```lua
 require("escape-hatch").setup({
-  enable_6_esc = true  -- ⚠️ Will force quit without any confirmation!
+    enable_6_esc = true  -- ⚠️ Will force quit without any confirmation!
 })
 ```
 
@@ -107,8 +107,8 @@ require("escape-hatch").setup({
 -- Show current configuration
 :lua require("escape-hatch").show_config()
 
--- Toggle nuclear option on/off
-:lua require("escape-hatch").toggle_nuclear()
+    -- Toggle nuclear option on/off
+    :lua require("escape-hatch").toggle_nuclear()
 ```
 
 ## 💡 Philosophy
@@ -135,27 +135,27 @@ require("escape-hatch").setup()
 
 -- Enable nuclear option
 require("escape-hatch").setup({
-  enable_6_esc = true  -- ⚠️ Dangerous!
+    enable_6_esc = true  -- ⚠️ Dangerous!
 })
 
 -- Custom commands
 require("escape-hatch").setup({
-  commands = {
-    save = "update",    -- Only save if buffer was modified
-    quit_all = "qall"   -- Alternative to qa
-  }
+    commands = {
+        save = "update",    -- Only save if buffer was modified
+        quit_all = "qall"   -- Alternative to qa
+    }
 
 })
 
--- My Setup
-require('escape-hatch').setup {
-        enable_6_esc = true,
-        close_all_special_buffers = true,
-        commands = {
-          save = 'update',
-          save_quit = 'x',
-        },
-      }
+-- Dev setup
+require('escape-hatch').setup({
+    enable_6_esc = true,
+    close_all_special_buffers = true,
+    commands = {
+        save = 'update',
+        save_quit = 'x',
+    },
+})
 ```
 
 ## 🤝 Contributing
