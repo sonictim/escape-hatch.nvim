@@ -144,7 +144,18 @@ require("escape-hatch").setup({
     save = "update",    -- Only save if buffer was modified
     quit_all = "qall"   -- Alternative to qa
   }
+
 })
+
+-- My Setup
+require('escape-hatch').setup {
+        enable_6_esc = true,
+        close_all_special_buffers = true,
+        commands = {
+          save = 'update',
+          save_quit = 'x',
+        },
+      }
 ```
 
 ## 🤝 Contributing
