@@ -87,7 +87,7 @@ local function telescope_close_any()
 end
 
 local function smart_close()
-	-- Step 1: Exit any mode to normal mode (fast)
+	-- Step 1: Exit any mode to normal mode
 	local mode = vim.fn.mode()
 	if mode == "t" then
 		vim.api.nvim_feedkeys(
@@ -95,30 +95,40 @@ local function smart_close()
 			"n",
 			false
 		)
-		return
+		return -- Terminal exit needs to complete first
 	elseif mode ~= "n" then
 		vim.cmd("stopinsert")
 	end
 
-	-- Step 2: Close special buffers (fast)
-	if vim.bo.buftype ~= "" then
-		vim.cmd("q")
-		return
+	-- Step 2: Close any non editable buffers
+	if config.close_all_special_buffers then
+		-- Close ALL special buffers
+		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+			if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype ~= "" then
+				vim.api.nvim_buf_delete(buf, { force = true }) -- Force to handle modified buffers
+			end
+		end
+	else
+		-- Close current buffer if it's special
+		if vim.bo.buftype ~= "" then
+			vim.api.nvim_buf_delete(0, { force = true }) -- 0 = current buffer
+		end
 	end
 
-	-- Step 3: Close floating windows (medium speed)
+	-- Step 3: Clear search highlighting
+	vim.cmd("nohlsearch")
+
+	-- Step 4: Close telescope if active
+	if telescope_close_any() then
+		return -- Telescope closed, we're done
+	end
+	-- Step 5: Close floating windows
 	for _, win in ipairs(vim.api.nvim_list_wins()) do
 		local config = vim.api.nvim_win_get_config(win)
 		if config.relative ~= "" then
 			vim.api.nvim_win_close(win, true)
 		end
 	end
-
-	-- Step 4: Clear search highlighting (fast)
-	vim.cmd("nohlsearch")
-
-	-- Step 5: Telescope check LAST (heavy)
-	telescope_close_any()
 end
 
 local function smart_save()
