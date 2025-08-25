@@ -26,12 +26,12 @@ local default_config = {
 
 	-- Descriptions for which-key integration
 	descriptions = {
-		level_1 = "Clear Highlights and Close Floats",
-		level_2 = "Save / Exit terminal",
-		level_3 = "Save & Quit",
-		level_4 = "Quit",
-		level_5 = "Quit All",
-		level_6 = "Force Quit All",
+		level_1 = "Escape",
+		level_2 = "Escape + Save",
+		level_3 = "Escape + Save + Quit",
+		level_4 = "Escape + Quit",
+		level_5 = "Escape + Quit All",
+		level_6 = "Escape + Force Quit All",
 	},
 }
 
@@ -85,24 +85,47 @@ local function telescope_close_any()
 	return true
 end
 
-local function smart_save()
-	-- leave insert/terminal mode
-	if vim.fn.mode() ~= "n" then
+local function smart_close()
+	-- Step 1: Exit any mode to normal mode
+	local mode = vim.fn.mode()
+	if mode == "t" then
+		vim.api.nvim_feedkeys(
+			vim.api.nvim_replace_termcodes(config.commands.exit_terminal, true, false, true),
+			"n",
+			false
+		)
+		return -- Terminal exit needs to complete first
+	elseif mode ~= "n" then
 		vim.cmd("stopinsert")
 	end
 
+	-- Step 2: Close telescope if active
+	if telescope_close_any() then
+		return -- Telescope closed, we're done
+	end
+
+	-- Step 3: Close floating windows
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		local config = vim.api.nvim_win_get_config(win)
+		if config.relative ~= "" then
+			vim.api.nvim_win_close(win, true)
+		end
+	end
+
+	-- Step 4: Clear search highlighting
+	vim.cmd("nohlsearch")
+end
+
+local function smart_save()
 	local name = vim.api.nvim_buf_get_name(0)
 	local buftype = vim.bo.buftype
 
 	if buftype ~= "" then
-		-- special buffer → just quit (no save needed)
-		vim.cmd("q")
+		vim.cmd("q") -- Special buffer, just quit
 	elseif name == "" then
-		-- unnamed normal buffer → prefill :saveas
-		vim.api.nvim_feedkeys(":" .. "saveas ", "c", false)
+		vim.api.nvim_feedkeys(":" .. "saveas ", "c", false) -- Unnamed buffer
 	else
-		-- named normal buffer → save normally
-		vim.cmd(config.commands.save)
+		vim.cmd(config.commands.save) -- Normal file
 	end
 end
 
@@ -114,20 +137,6 @@ local function smart_save_quit()
 		vim.cmd(config.commands.save_quit)
 	end
 end
-
-local function clear_ui()
-	-- Close all floating windows
-	for _, win in ipairs(vim.api.nvim_list_wins()) do
-		local config = vim.api.nvim_win_get_config(win)
-		if config.relative ~= "" then
-			vim.api.nvim_win_close(win, true)
-		end
-	end
-
-	-- Clear search highlighting
-	vim.cmd("nohlsearch")
-end
-
 vim.api.nvim_create_user_command("TelescopeClose", function()
 	if not telescope_close_any() then
 		vim.notify("No Telescope picker to close", vim.log.levels.INFO)
@@ -136,52 +145,47 @@ end, {})
 -- set up keymaps based on configuration
 local function setup_keymaps()
 	if config.enable_1_esc then
-		vim.keymap.set("n", "<Esc>", clear_ui, { desc = "Clear highlights and Close Floats" })
+		vim.keymap.set({ "n", "i", "v", "t" }, "<Esc>", smart_close, { desc = "Escape" })
 	end
 	-- level 2: save / exit terminal
 	if config.enable_2_esc then
-		vim.keymap.set("t", "<Esc><Esc>", config.commands.exit_terminal, { desc = "Exit terminal" })
-		vim.keymap.set({ "i", "v", "n" }, "<Esc><Esc>", function()
-			if telescope_close_any() then
-				return
-			end
+		vim.keymap.set({ "n", "i", "v", "t" }, "<Esc><Esc>", function()
+			smart_close()
 			smart_save()
-		end, { desc = "Smart Save/Close" })
+		end, { desc = "Escape + Save" })
 	end
 
 	-- Level 3: Save & quit
 
 	if config.enable_3_esc then
-		vim.keymap.set({ "i", "n", "v" }, "<Esc><Esc><Esc>", function()
+		vim.keymap.set({ "n", "i", "v", "t" }, "<Esc><Esc><Esc>", function()
+			smart_close()
 			smart_save_quit()
-		end, { desc = config.descriptions.level_3 })
+		end, { desc = "Escape + Save + Quit" })
 	end
 
 	-- Level 4: Quit (safe)
 	if config.enable_4_esc then
-		vim.keymap.set(
-			{ "i", "n", "v" },
-			"<Esc><Esc><Esc><Esc>",
-			"<Esc>:" .. config.commands.quit .. "<CR>", -- Fixed: same pattern as level 3
-			{ desc = config.descriptions.level_4 }
-		)
+		vim.keymap.set({ "i", "n", "v", "t" }, "<Esc><Esc><Esc><Esc>", function()
+			smart_close()
+			vim.cmd(config.commands.quit)
+		end, { desc = "Escape + Quit" })
 	end
 
 	-- Level 5: Quit all (safe)
 	if config.enable_5_esc then
-		vim.keymap.set(
-			{ "i", "n", "v" },
-			"<Esc><Esc><Esc><Esc><Esc>",
-			"<Esc>:" .. config.commands.quit_all .. "<CR>", -- Fixed: same pattern as level 3
-			{ desc = config.descriptions.level_5 }
-		)
+		vim.keymap.set({ "i", "n", "v", "t" }, "<Esc><Esc><Esc><Esc><Esc>", function()
+			smart_close()
+			vim.cmd(config.commands.quit_all)
+		end, { desc = "Escape + Quit All" })
 	end
+
 	-- Level 6: Nuclear option
 	if config.enable_6_esc then
-		vim.keymap.set({ "i", "n", "v" }, "<Esc><Esc><Esc><Esc><Esc><Esc>", function()
-			vim.cmd("normal! <Esc>") -- Ensure we're in normal mode
+		vim.keymap.set({ "i", "n", "v", "t" }, "<Esc><Esc><Esc><Esc><Esc><Esc>", function()
+			smart_close()
 			nuclear_option()
-		end, { desc = config.descriptions.level_6 })
+		end, { desc = "Escape + Force Quit All" })
 	end
 end
 

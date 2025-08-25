@@ -6,23 +6,24 @@ An intuitive keybinding system that scales with your urgency level.
 
 ## ✨ Features
 
-- **Intuitive escalation**: The more escapes you press, the more "final" the action
-- **Universal**: Works across all modes (normal, insert, visual, terminal)  
+- **Mode agnostic**: Every escape level works from any mode (insert, visual, terminal, normal)
+- **Additive escalation**: Each level builds on the previous one consistently
+- **Universal escape**: Level 1 handles all "get me out" scenarios
 - **Safe by default**: Destructive actions require more deliberate keypresses
-- **Smart context**: Level 2 saves files or closes UI windows (help, Lazy, Telescope, etc.)
-- **Configurable**: Enable/disable levels, customize commands, add confirmations
-- **No conflicts**: Preserves all built-in Vim behaviors
+- **Smart context**: Automatically handles Telescope, LSP floats, and UI windows
+- **Configurable**: Enable/disable levels, customize commands
+- **No conflicts**: Enhances built-in Vim behaviors without breaking them
 
 ## 🎯 The Escalation System
 
 | Escapes | Action | Description |
 |---------|--------|-------------|
-| **1** | Exit / Clear UI | Exit mode + Clear Search + Close Floats |
-| **2** | Save / Smart Close | Save file OR close UI windows (help, Lazy, etc.) |
-| **3** | Save & Quit | Save current file and close it |
-| **4** | Quit | Close current file (with unsaved warning) |
-| **5** | Quit All | Close all files (with unsaved warnings) |
-| **6** | Nuclear 🔥 | Force quit everything, discard all changes |
+| **1** | Escape | Exit mode + Clear search + Close floating windows |
+| **2** | Escape + Save | Level 1 + Save current file |
+| **3** | Escape + Save + Quit | Level 2 + Close current file |
+| **4** | Escape + Quit | Level 1 + Close file (with unsaved warning) |
+| **5** | Escape + Quit All | Level 1 + Close all files (with unsaved warnings) |
+| **6** | Escape + Nuclear 🔥 | Level 1 + Force quit everything, discard changes |
 
 ## 📦 Installation
 
@@ -51,11 +52,11 @@ use {
 ```lua
 require("escape-hatch").setup({
   -- Enable/disable specific escape levels
-  enable_1_esc = true,   -- Exit Mode / Clear UI
-  enable_2_esc = true,   -- Save / Exit terminal
-  enable_3_esc = true,   -- Save & quit
-  enable_4_esc = true,   -- Quit (safe)
-  enable_5_esc = true,   -- Quit all (safe)
+  enable_1_esc = true,   -- Escape (exit mode + clear UI)
+  enable_2_esc = true,   -- Escape + Save
+  enable_3_esc = true,   -- Escape + Save + Quit
+  enable_4_esc = true,   -- Escape + Quit (safe)
+  enable_5_esc = true,   -- Escape + Quit All (safe)
   enable_6_esc = false,  -- Nuclear option (disabled by default for safety)
   
   -- Custom commands (optional)
@@ -70,19 +71,19 @@ require("escape-hatch").setup({
   
   -- Custom descriptions
   descriptions = {
-    level_1 = "Exit Mode / Clear UI",
-    level_2 = "Save / Exit Terminal",
-    level_3 = "Save & Quit", 
-    level_4 = "Quit",
-    level_5 = "Quit All",
-    level_6 = "Force Quit All"
+    level_1 = "Escape",
+    level_2 = "Escape + Save",
+    level_3 = "Escape + Save + Quit", 
+    level_4 = "Escape + Quit",
+    level_5 = "Escape + Quit All",
+    level_6 = "Escape + Force Quit All"
   }
 })
 ```
 
 ## 🚦 Safety First
 
-**Level 5** uses `:qa` which safely prompts you before closing files with unsaved changes.
+**Level 4 and 5** use `:q` and `:qa` which safely prompt you before closing files with unsaved changes.
 
 The **nuclear option** (6 escapes) uses `:qa!` and is **disabled by default** because it immediately force quits everything without any confirmation or protection.
 
@@ -105,34 +106,36 @@ require("escape-hatch").setup({
 
 ## 💡 Philosophy
 
-Traditional Neovim configs scatter save/quit commands across random keybindings:
+Traditional Neovim configs scatter save/quit commands across random keybindings and modes:
 - `<C-s>` for save
 - `<leader>w` for save  
 - `<leader>q` for quit
 - `:wq` for save & quit
 
-**escape-hatch.nvim** creates a unified, escalating system:
+**escape-hatch.nvim** creates a unified, escalating system where **every level starts by getting you to a clean state**, then adds progressively more final actions:
+
+- **Consistent**: Every level works from any mode (normal, insert, visual, terminal)
+- **Additive**: Each level does everything the previous level does, plus one more action
 - **Predictable**: Same key, different repetition counts
-- **Memorable**: Impossible to forget the pattern
-- **Scalable**: Easy to extend with more levels
-- **Logical**: More escapes = more final actions
+- **Memorable**: Impossible to forget the pattern  
+- **Logical**: More escapes = escape + more final actions
 
 ## 🎨 Examples
 
 ```lua
--- Minimal setup (recommended)
+-- Basic setup (gets levels 1-5, nuclear disabled)
 require("escape-hatch").setup()
 
-
--- Enable Nuclear Option
+-- Enable nuclear option
 require("escape-hatch").setup({
   enable_6_esc = true  -- ⚠️ Dangerous!
 })
+
 -- Custom commands
 require("escape-hatch").setup({
   commands = {
-    save = "update",    -- Only save if buffer was modified (fixed)
-    quit_all = "qall"   -- Alternative to qa (fixed)
+    save = "update",    -- Only save if buffer was modified
+    quit_all = "qall"   -- Alternative to qa
   }
 })
 ```
@@ -147,3 +150,4 @@ MIT
 
 ---
 
+**"More escapes = escape + more final actions"** - The escape-hatch philosophy
