@@ -95,7 +95,7 @@ Due to Neovim's keymap system, there is a brief delay (controlled by `timeoutlen
 **To reduce the delay:**
 ```lua
 -- Set a shorter timeout globally (affects all multi-key sequences)
-vim.o.timeoutlen = 100  -- Default is usually 1000ms
+vim.o.timeoutlen = 200  -- Default is usually 1000ms. Less than 200 is not recommended
 
 require("escape-hatch").setup({
   -- your config
