@@ -65,6 +65,7 @@ require("escape-hatch").setup({
 
     -- Behavior options
     close_all_special_buffers = false,  -- Close all help/quickfix/etc buffers on single escape
+    handle_completion_popups = false,   -- Close Auto Complete Suggestion Popup on single escape
 
     -- Custom commands (optional)
     commands = {
@@ -142,7 +143,7 @@ require("escape-hatch").setup({
 require("escape-hatch").setup({
     commands = {
         save = "update",    -- Only save if buffer was modified
-        quit_all = "qall"   -- Alternative to qa
+        quit_all = "wqa"    -- Save all files then quit (instead of qa)
     }
 
 })

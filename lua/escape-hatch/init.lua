@@ -14,6 +14,7 @@ local default_config = {
 	enable_5_esc = true, -- Quit all (safe)
 	enable_6_esc = false, -- Force quit all (nuclear - disabled by default)
 	close_all_special_buffers = false,
+	handle_completion_popups = false,
 
 	-- Custom commands (optional overrides)
 	commands = {
@@ -47,6 +48,21 @@ end
 -- Returns true if telescope is installed (doesn't error if not)
 local function telescope_available()
 	return pcall(require, "telescope")
+end
+
+local function completion_active()
+	-- Check for native completion
+	if vim.fn.pumvisible() == 1 then
+		return true
+	end
+
+	-- Check for nvim-cmp (if installed)
+	local ok, cmp = pcall(require, "cmp")
+	if ok and cmp.visible() then
+		return true
+	end
+
+	return false
 end
 
 -- Close any active Telescope picker, regardless of which Telescope window is focused.
@@ -87,6 +103,11 @@ local function telescope_close_any()
 end
 
 local function smart_close()
+	-- Handle completion popups first, before any mode changes
+	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+		return
+	end
 	-- Step 1: Exit any mode to normal mode
 	local mode = vim.fn.mode()
 	if mode == "t" then
@@ -96,6 +117,9 @@ local function smart_close()
 			false
 		)
 		return -- Terminal exit needs to complete first
+	elseif mode == "v" or mode == "V" or mode == "\22" then -- visual, visual-line, visual-block
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+		return
 	elseif mode ~= "n" then
 		vim.cmd("stopinsert")
 	end
@@ -240,6 +264,22 @@ function M.toggle_nuclear()
 
 	local status = config.enable_6_esc and "enabled" or "disabled"
 	print("🔥 Nuclear option " .. status)
+end
+
+-- Utility function to toggle close_all_special_buffers option
+function M.toggle_close_all_buffers()
+	config.close_all_special_buffers = not config.close_all_special_buffers
+
+	local status = config.close_all_special_buffers and "enabled" or "disabled"
+	print("Close all special buffers " .. status)
+end
+
+-- Utility function to toggle close_all_special_buffers option
+function M.toggle_completion_popups()
+	config.handle_completion_popups = not config.handle_completion_popups
+
+	local status = config.handle_completion_popups and "enabled" or "disabled"
+	print("Close completion popups " .. status)
 end
 
 return M
