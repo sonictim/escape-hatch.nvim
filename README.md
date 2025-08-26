@@ -85,7 +85,13 @@ require("escape-hatch").setup({
         level_4 = "Escape + Quit",
         level_5 = "Escape + Quit All",
         level_6 = "Escape + Force Quit All"
-    }
+    },
+
+    -- List of Buffers that should not be closed by Escape Hatch
+	ignore_buffers = {
+		"tutor", -- Vimtutor buffers
+		-- Users can add more patterns here
+	},
 })
 ```
 ## ⚠️ Multi-Key Sequence Behavior
@@ -127,8 +133,16 @@ require("escape-hatch").setup({
 -- Show current configuration
 :lua require("escape-hatch").show_config()
 
-    -- Toggle nuclear option on/off
-    :lua require("escape-hatch").toggle_nuclear()
+-- Toggle functions (can be mapped to keys)
+:lua require("escape-hatch").toggle_nuclear()          -- Enable/disable nuclear option
+:lua require("escape-hatch").toggle_close_all_buffers() -- Toggle closing all special buffers
+:lua require("escape-hatch").toggle_completion_popups() -- Toggle completion popup handling
+:lua require("escape-hatch").toggle_plugin()           -- Enable/disable entire plugin
+
+-- Example keybindings
+vim.keymap.set("n", "<leader>en", require("escape-hatch").toggle_nuclear)
+vim.keymap.set("n", "<leader>ec", require("escape-hatch").toggle_close_all_buffers)
+vim.keymap.set("n", "<leader>ep", require("escape-hatch").toggle_plugin)
 ```
 
 ## 💡 Philosophy

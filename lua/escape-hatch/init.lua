@@ -16,6 +16,7 @@ local default_config = {
 	close_all_special_buffers = false,
 	handle_completion_popups = false,
 
+	plugin_enabled = true,
 	-- Custom commands (optional overrides)
 	commands = {
 		save = "w", -- Changed from ":w<CR>" to just "w"
@@ -34,6 +35,10 @@ local default_config = {
 		level_4 = "Escape + Quit",
 		level_5 = "Escape + Quit All",
 		level_6 = "Escape + Force Quit All",
+	},
+	ignore_buffers = {
+		"tutor", -- Vimtutor buffers
+		-- Users can add more patterns here
 	},
 }
 
@@ -62,6 +67,17 @@ local function completion_active()
 		return true
 	end
 
+	return false
+end
+
+local function preserve_buffer(buf_name, buf_type)
+	for _, pattern in ipairs(config.ignore_buffers) do
+		local ok1, match1 = pcall(string.match, buf_name, pattern)
+		local ok2, match2 = pcall(string.match, buf_type, pattern)
+		if (ok1 and match1) or (ok2 and match2) then
+			return true
+		end
+	end
 	return false
 end
 
@@ -119,7 +135,7 @@ local function smart_close()
 		return -- Terminal exit needs to complete first
 	elseif mode == "v" or mode == "V" or mode == "\22" then -- visual, visual-line, visual-block
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
-		return
+		-- return
 	elseif mode ~= "n" then
 		vim.cmd("stopinsert")
 	end
@@ -129,13 +145,19 @@ local function smart_close()
 		-- Close ALL special buffers
 		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
 			if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype ~= "" then
-				vim.api.nvim_buf_delete(buf, { force = true }) -- Force to handle modified buffers
+				local name = vim.api.nvim_buf_get_name(buf)
+				if not preserve_buffer(name, vim.bo[buf].buftype) then
+					vim.api.nvim_buf_delete(buf, { force = true })
+				end
 			end
 		end
 	else
 		-- Close current buffer if it's special
 		if vim.bo.buftype ~= "" then
-			vim.api.nvim_buf_delete(0, { force = true }) -- 0 = current buffer
+			local name = vim.api.nvim_buf_get_name(0)
+			if not preserve_buffer(name, vim.bo.buftype) then
+				vim.api.nvim_buf_delete(0, { force = true })
+			end
 		end
 	end
 
@@ -179,6 +201,9 @@ vim.api.nvim_create_user_command("TelescopeClose", function()
 end, {})
 -- set up keymaps based on configuration
 local function setup_keymaps()
+	if not config.plugin_enabled then
+		return
+	end
 	if config.enable_1_esc then
 		vim.keymap.set({ "n", "i", "v", "t" }, "<Esc>", smart_close, { desc = "Escape" })
 	end
@@ -256,11 +281,15 @@ end
 function M.toggle_nuclear()
 	config.enable_6_esc = not config.enable_6_esc
 
-	-- Remove existing keymaps
-	vim.keymap.del({ "i", "n", "v" }, "<Esc><Esc><Esc><Esc><Esc><Esc>", { silent = true })
-
-	-- Re-setup keymaps
-	setup_keymaps()
+	local modes = { "n", "i", "v", "t" }
+	if config.enable_6_esc then
+		vim.keymap.set(modes, "<Esc><Esc><Esc><Esc><Esc><Esc>", function()
+			smart_close()
+			nuclear_option()
+		end, { desc = "Escape + Force Quit All" })
+	else
+		pcall(vim.keymap.del, modes, "<Esc><Esc><Esc><Esc><Esc><Esc>")
+	end
 
 	local status = config.enable_6_esc and "enabled" or "disabled"
 	print("🔥 Nuclear option " .. status)
@@ -280,6 +309,27 @@ function M.toggle_completion_popups()
 
 	local status = config.handle_completion_popups and "enabled" or "disabled"
 	print("Close completion popups " .. status)
+end
+-- Utility function to toggle entire plugin on/off
+function M.toggle_plugin()
+	config.plugin_enabled = not config.plugin_enabled
+
+	if config.plugin_enabled then
+		setup_keymaps()
+		print("Escape-hatch enabled")
+	else
+		-- Remove all keymaps
+		local modes = { "n", "i", "v", "t" }
+		pcall(vim.keymap.del, modes, "<Esc>")
+		pcall(vim.keymap.del, modes, "<Esc><Esc>")
+		pcall(vim.keymap.del, modes, "<Esc><Esc><Esc>")
+		pcall(vim.keymap.del, modes, "<Esc><Esc><Esc><Esc>")
+		pcall(vim.keymap.del, modes, "<Esc><Esc><Esc><Esc><Esc>")
+		if config.enable_6_esc then
+			pcall(vim.keymap.del, modes, "<Esc><Esc><Esc><Esc><Esc><Esc>")
+		end
+		print("Escape-hatch disabled")
+	end
 end
 
 return M
