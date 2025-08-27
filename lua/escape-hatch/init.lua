@@ -163,11 +163,11 @@ end
 
 local function smart_close()
 	-- Handle completion popups first, before any mode changes
-	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
-		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
-		vim.cmd("startinsert")
-		return
-	end
+	-- if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
+	-- 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+	-- 	vim.cmd("startinsert")
+	-- 	return
+	-- end
 	-- Step 4: Close telescope if active
 	if telescope_close_any() then
 		return -- Telescope closed, we're done
