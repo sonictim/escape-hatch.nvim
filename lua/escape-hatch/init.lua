@@ -193,15 +193,15 @@ local function smart_close()
 	--  testing something stupid
 	-- Step 1: Exit any mode to normal mode
 	if buftype == "terminal" then
-		-- 	print("Terminal Path")
-		-- 	if config.handle_terminal == "hide" then
-		-- 		vim.cmd.hide()
-		-- 		return
-		-- 	end
-		-- elseif config.handle_terminal == "close" then
-		-- 	vim.cmd.close()
-		-- 	return
-		--    else
+		print("Terminal Path")
+		if config.commands.exit_terminal == "hide" then
+			vim.cmd.hide()
+			return
+		end
+	elseif config.commands.exit_terminal == "close" then
+		vim.cmd.close()
+		return
+	else
 		vim.api.nvim_feedkeys(
 			vim.api.nvim_replace_termcodes(config.commands.exit_terminal, true, false, true),
 			"n",
