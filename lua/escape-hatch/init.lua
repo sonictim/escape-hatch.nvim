@@ -119,24 +119,6 @@ local function telescope_close_any()
 end
 
 local function smart_close()
-	-- Step 3: Clear search highlighting
-	vim.cmd("nohlsearch")
-	-- Step 4: Close telescope if active
-	if telescope_close_any() then
-		return -- Telescope closed, we're done
-	end
-	-- Step 5: Close floating windows
-	local flag = false
-	for _, win in ipairs(vim.api.nvim_list_wins()) do
-		local win_config = vim.api.nvim_win_get_config(win)
-		if win_config.relative ~= "" then
-			vim.api.nvim_win_close(win, true)
-			flag = true
-		end
-	end
-	if flag == true then
-		return
-	end
 	-- Handle completion popups first, before any mode changes
 	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
@@ -152,8 +134,7 @@ local function smart_close()
 		)
 		return -- Terminal exit needs to complete first
 	elseif mode == "v" or mode == "V" or mode == "\22" then -- visual, visual-line, visual-block
-		-- vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
-		vim.cmd("normal! n")
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
 		return
 	elseif mode ~= "n" then
 		vim.cmd("stopinsert")
@@ -178,6 +159,21 @@ local function smart_close()
 			if not preserve_buffer(name, vim.bo.buftype) then
 				vim.api.nvim_buf_delete(0, { force = true })
 			end
+		end
+	end
+
+	-- Step 3: Clear search highlighting
+	vim.cmd("nohlsearch")
+
+	-- Step 4: Close telescope if active
+	if telescope_close_any() then
+		return -- Telescope closed, we're done
+	end
+	-- Step 5: Close floating windows
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		local win_config = vim.api.nvim_win_get_config(win)
+		if win_config.relative ~= "" then
+			vim.api.nvim_win_close(win, true)
 		end
 	end
 end
