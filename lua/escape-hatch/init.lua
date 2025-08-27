@@ -171,7 +171,6 @@ local function close_floating_windows()
 			-- Only close floating windows that aren't in the ignore list
 			if not preserve_buffer(vim.api.nvim_buf_get_name(buf), ft) then
 				vim.api.nvim_win_close(win, true)
-				print("Closed Window: ", name)
 				-- closed_floating = true
 			end
 		end
