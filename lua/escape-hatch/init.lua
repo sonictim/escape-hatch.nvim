@@ -1,4 +1,3 @@
-fal
 -- escape-hatch.nvim
 -- The escalating escape system for Neovim
 -- More escapes = more final actions
