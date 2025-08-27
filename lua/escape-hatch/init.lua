@@ -124,6 +124,22 @@ local function smart_close()
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
 		return
 	end
+	-- Step 4: Close telescope if active
+	if telescope_close_any() then
+		return -- Telescope closed, we're done
+	end
+	-- Step 5: Close floating windows
+	local closed_floating = false
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		local win_config = vim.api.nvim_win_get_config(win)
+		if win_config.relative ~= "" then
+			vim.api.nvim_win_close(win, true)
+			closed_floating = true
+		end
+	end
+	if closed_floating then
+		return
+	end
 	-- Step 1: Exit any mode to normal mode
 	local mode = vim.fn.mode()
 	if mode == "t" then
@@ -164,18 +180,6 @@ local function smart_close()
 
 	-- Step 3: Clear search highlighting
 	vim.cmd("nohlsearch")
-
-	-- Step 4: Close telescope if active
-	if telescope_close_any() then
-		return -- Telescope closed, we're done
-	end
-	-- Step 5: Close floating windows
-	for _, win in ipairs(vim.api.nvim_list_wins()) do
-		local win_config = vim.api.nvim_win_get_config(win)
-		if win_config.relative ~= "" then
-			vim.api.nvim_win_close(win, true)
-		end
-	end
 end
 
 local function smart_save()
