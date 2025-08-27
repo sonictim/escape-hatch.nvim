@@ -178,16 +178,16 @@ local function smart_close()
 	print("Mode:", mode, "Bufftype:", vim.bo.buftype)
 	-- Handle completion popups first, before any mode changes
 
-	if config.handle_completion_popups and mode == "i" and completion_active() then
-		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-e>", true, false, true), "n", false)
-		return
-	end
-
-	-- if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
-	-- 	print("Completion path")
-	-- 	close_floating_windows()
+	-- if config.handle_completion_popups and mode == "i" and completion_active() then
+	-- 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-e>", true, false, true), "n", false)
 	-- 	return
 	-- end
+
+	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
+		print("Completion path")
+		close_floating_windows()
+		return
+	end
 	-- Step 4: Close telescope if active
 	if telescope_close_any() then
 		print("Telescope path")
