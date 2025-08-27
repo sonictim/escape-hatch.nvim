@@ -15,7 +15,7 @@ local default_config = {
 	enable_6_esc = false, -- Force quit all (nuclear - disabled by default)
 	close_all_special_buffers = false,
 	handle_completion_popups = false,
-	
+
 	-- Completion engine detection (auto-detects common engines)
 	-- Can be "auto", "nvim-cmp", "blink", "coq", "native", or a custom function
 	completion_engine = "auto",
@@ -71,7 +71,7 @@ local function completion_active()
 	if type(config.completion_engine) == "function" then
 		return config.completion_engine()
 	end
-	
+
 	-- Handle specific engines
 	if config.completion_engine == "native" then
 		return vim.fn.pumvisible() == 1
@@ -163,11 +163,11 @@ end
 
 local function smart_close()
 	-- Handle completion popups first, before any mode changes
-	-- if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
-	-- 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
-	-- 	vim.cmd("startinsert")
-	-- 	return
-	-- end
+	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+		vim.cmd("startinsert")
+		return
+	end
 	-- Step 4: Close telescope if active
 	if telescope_close_any() then
 		return -- Telescope closed, we're done
