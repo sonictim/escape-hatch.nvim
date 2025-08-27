@@ -166,12 +166,8 @@ local function close_floating_windows()
 		if win_config.relative ~= "" then
 			local buf = vim.api.nvim_win_get_buf(win)
 			local ft = vim.bo[buf].filetype
-			local name = vim.api.nvim_buf_get_name(buf)
-			print(name)
-			-- Only close floating windows that aren't in the ignore list
 			if not preserve_buffer(vim.api.nvim_buf_get_name(buf), ft) then
 				vim.api.nvim_win_close(win, true)
-				-- closed_floating = true
 			end
 		end
 	end
@@ -184,14 +180,11 @@ local function smart_close()
 	end
 	-- Step 4: Close telescope if active
 	if telescope_close_any() then
-		return -- Telescope closed, we're done
+		return
 	end
 	-- Step 5: Close floating windows
-	-- local closed_floating = false
 	close_floating_windows()
-	-- if closed_floating then
-	-- return -- Stay in current mode after closing floating windows
-	-- end
+
 	-- Step 1: Exit any mode to normal mode
 	local mode = vim.fn.mode()
 	if mode == "t" then
@@ -211,7 +204,6 @@ local function smart_close()
 
 	-- Step 2: Close any non editable buffers
 	if config.close_all_special_buffers then
-		-- Close ALL special buffers
 		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
 			if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype ~= "" then
 				local name = vim.api.nvim_buf_get_name(buf)
