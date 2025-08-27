@@ -40,6 +40,7 @@ local default_config = {
 		level_5 = "Escape + Quit All",
 		level_6 = "Escape + Force Quit All",
 	},
+
 	preserve_buffers = {
 		"tutor", -- Vimtutor buffers
 		"lualine", -- Lualine statusline
@@ -54,6 +55,14 @@ local default_config = {
 }
 
 local config = {}
+
+local dbug = false
+
+local function dprint(string)
+	if dbug then
+		print(string)
+	end
+end
 
 -- Nuclear option - force quit all without confirmation
 -- If you want confirmation, just use level 5 (:qa) which has built-in protection
@@ -175,7 +184,7 @@ end
 local function smart_close()
 	local mode = vim.fn.mode()
 	local buftype = vim.bo.buftype
-	print("Mode:", mode, "Bufftype:", vim.bo.buftype)
+	dprint("Mode:", mode, "Bufftype:", vim.bo.buftype)
 	-- Handle completion popups first, before any mode changes
 
 	-- if config.handle_completion_popups and mode == "i" and completion_active() then
@@ -184,13 +193,13 @@ local function smart_close()
 	-- end
 
 	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
-		print("Completion path")
+		dprint("Completion path")
 		close_floating_windows()
 		return
 	end
 	-- Step 4: Close telescope if active
 	if telescope_close_any() then
-		print("Telescope path")
+		dprint("Telescope path")
 		return
 	end
 	-- Step 5: Close floating windows
@@ -198,7 +207,7 @@ local function smart_close()
 	--  testing something stupid
 	-- Step 1: Exit any mode to normal mode
 	if buftype == "terminal" then
-		print("Terminal Path")
+		dprint("Terminal Path")
 		if config.commands.exit_terminal == "hide" then
 			vim.cmd.hide()
 			return
@@ -215,36 +224,36 @@ local function smart_close()
 		end
 	end
 	if mode == "v" or mode == "V" or mode == "\22" then -- visual, visual-line, visual-block
-		print("Visual Path")
+		dprint("Visual Path")
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
 		return
 	elseif mode ~= "n" then
-		print("Insert Path")
+		dprint("Insert Path")
 		vim.cmd("stopinsert")
 		return
 	end
-	-- print("Special Buffers")
+	-- dprint("Special Buffers")
 	-- Step 2: Close any non editable buffers
 	if config.close_all_special_buffers then
 		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
 			if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype ~= "" then
 				local name = vim.api.nvim_buf_get_name(buf)
-				print(name)
-				if not preserve_buffer(name, vim.bo[buf].buftype) or name ~= "terminal" then
+				-- print(name)
+				if not preserve_buffer(name, vim.bo[buf].buftype) and vim.bo[buf].buftype ~= "terminal" then
 					vim.api.nvim_buf_delete(buf, { force = true })
 				end
 			end
 		end
 	else
 		-- Close current buffer if it's special
-		if buftype ~= "" or buftype ~= "terminal" then
+		if buftype ~= "" and buftype ~= "terminal" then
 			local name = vim.api.nvim_buf_get_name(0)
 			if not preserve_buffer(name, vim.bo.buftype) then
 				vim.api.nvim_buf_delete(0, { force = true })
 			end
 		end
 	end
-	-- print("Clear Search")
+	-- dprint("Clear Search")
 	-- Step 3: Clear search highlighting
 	vim.cmd("nohlsearch")
 end
