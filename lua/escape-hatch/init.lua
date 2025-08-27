@@ -15,6 +15,7 @@ local default_config = {
 	enable_6_esc = false, -- Force quit all (nuclear - disabled by default)
 	close_all_special_buffers = false,
 	handle_completion_popups = false,
+	handle_terminal = "keep",
 
 	-- Completion engine detection (auto-detects common engines)
 	-- Can be "auto", "nvim-cmp", "blink", "coq", "native", or a custom function
@@ -174,6 +175,7 @@ local function close_floating_windows()
 end
 local function smart_close()
 	local mode = vim.fn.mode()
+	local buftype = vim.bo.buftype
 	print("Mode:", mode, "Bufftype:", vim.bo.buftype)
 	-- Handle completion popups first, before any mode changes
 	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
@@ -190,16 +192,23 @@ local function smart_close()
 	-- close_floating_windows()
 	--  testing something stupid
 	-- Step 1: Exit any mode to normal mode
-	local mode = vim.fn.mode()
-	if mode == "t" then
+	if buftype == "terminal" then
 		print("Terminal Path")
-		vim.api.nvim_feedkeys(
-			vim.api.nvim_replace_termcodes(config.commands.exit_terminal, true, false, true),
-			"n",
-			false
-		)
-		return -- Terminal exit needs to complete first
-	elseif mode == "v" or mode == "V" or mode == "\22" then -- visual, visual-line, visual-block
+		if config.handle_terminal == "hide" then
+			vim.cmd.hide()
+			return
+		end
+	elseif config.handle_terminal == "close" then
+		vim.cmd.close()
+		return
+	end
+	-- vim.api.nvim_feedkeys(
+	-- 	vim.api.nvim_replace_termcodes(config.commands.exit_terminal, true, false, true),
+	-- 	"n",
+	-- 	false
+	-- )
+	-- return -- Terminal exit needs to complete first
+	if mode == "v" or mode == "V" or mode == "\22" then -- visual, visual-line, visual-block
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
 		return
 	elseif mode ~= "n" then
