@@ -152,8 +152,7 @@ local function smart_close()
 		)
 		return -- Terminal exit needs to complete first
 	elseif mode == "v" or mode == "V" or mode == "\22" then -- visual, visual-line, visual-block
-		vim.cmd([[normal! \<Esc>]])
-		-- vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "m", true)
 		return
 	elseif mode ~= "n" then
 		vim.cmd("stopinsert")
