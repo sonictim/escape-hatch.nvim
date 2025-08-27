@@ -36,8 +36,15 @@ local default_config = {
 		level_5 = "Escape + Quit All",
 		level_6 = "Escape + Force Quit All",
 	},
-	ignore_buffers = {
+	preserve_buffers = {
 		"tutor", -- Vimtutor buffers
+		"lualine", -- Lualine statusline
+		"neo%-tree", -- Neo-tree file explorer
+		"nvim%-tree", -- Nvim-tree file explorer
+		"alpha", -- Alpha dashboard
+		"dashboard", -- Dashboard
+		"trouble", -- Trouble diagnostics
+		"which%-key", -- Which-key popup (usually auto-closes)
 		-- Users can add more patterns here
 	},
 }
@@ -71,7 +78,7 @@ local function completion_active()
 end
 
 local function preserve_buffer(buf_name, buf_type)
-	for _, pattern in ipairs(config.ignore_buffers) do
+	for _, pattern in ipairs(config.preserve_buffers) do
 		local ok1, match1 = pcall(string.match, buf_name, pattern)
 		local ok2, match2 = pcall(string.match, buf_type, pattern)
 		if (ok1 and match1) or (ok2 and match2) then
@@ -135,8 +142,8 @@ local function smart_close()
 		if win_config.relative ~= "" then
 			local buf = vim.api.nvim_win_get_buf(win)
 			local ft = vim.bo[buf].filetype
-			-- Only close certain types of floating windows, not persistent UI
-			if ft ~= "lualine" and not ft:match("^neo%-tree") then
+			-- Only close floating windows that aren't in the ignore list
+			if not preserve_buffer(vim.api.nvim_buf_get_name(buf), ft) then
 				vim.api.nvim_win_close(win, true)
 				closed_floating = true
 			end

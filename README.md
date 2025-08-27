@@ -22,7 +22,7 @@ An intuitive keybinding system that scales with your urgency level.
 
 | Escapes | Action | Description |
 |---------|--------|-------------|
-| **1** | Escape | Exit mode + Clear search + Close floating windows |
+| **1** | Escape | Clear/Exit mode + Close UI windows |
 | **2** | Escape + Save | Level 1 + Save current file |
 | **3** | Escape + Save + Quit | Level 2 + Close current file |
 | **4** | Escape + Quit | Level 1 + Close file (with unsaved warning) |
@@ -87,11 +87,18 @@ require("escape-hatch").setup({
         level_6 = "Escape + Force Quit All"
     },
 
-    -- List of Buffers that should not be closed by Escape Hatch
-	ignore_buffers = {
-		"tutor", -- Vimtutor buffers
-		-- Users can add more patterns here
-	},
+    -- UI elements to preserve (not close with escape)
+    preserve_buffers = {
+        "tutor",      -- Vimtutor buffers
+        "lualine",    -- Lualine statusline  
+        "neo%-tree",  -- Neo-tree file explorer
+        "nvim%-tree", -- Nvim-tree file explorer
+        "alpha",      -- Alpha dashboard
+        "dashboard",  -- Dashboard
+        "trouble",    -- Trouble diagnostics
+        "which%-key", -- Which-key popup
+        -- Users can add more patterns here
+    },
 })
 ```
 ## ⚠️ Multi-Key Sequence Behavior
