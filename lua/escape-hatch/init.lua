@@ -129,19 +129,11 @@ local function smart_close()
 		return -- Telescope closed, we're done
 	end
 	-- Step 5: Close floating windows
-	local closed_floating = false
 	for _, win in ipairs(vim.api.nvim_list_wins()) do
 		local win_config = vim.api.nvim_win_get_config(win)
-		-- Only close floating windows that are not the current window and are actually floating
-		if win_config.relative ~= "" and win ~= vim.api.nvim_get_current_win() then
-			local success = pcall(vim.api.nvim_win_close, win, true)
-			if success then
-				closed_floating = true
-			end
+		if win_config.relative ~= "" then
+			vim.api.nvim_win_close(win, true)
 		end
-	end
-	if closed_floating then
-		return
 	end
 	-- Step 1: Exit any mode to normal mode
 	local mode = vim.fn.mode()
