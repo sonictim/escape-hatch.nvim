@@ -160,19 +160,7 @@ local function telescope_close_any()
 	end)
 	return true
 end
-
-local function smart_close()
-	-- Handle completion popups first, before any mode changes
-	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
-		print("Completion Triggered")
-		vim.api.nvim_input("<Esc>")
-	end
-	-- Step 4: Close telescope if active
-	if telescope_close_any() then
-		return -- Telescope closed, we're done
-	end
-	-- Step 5: Close floating windows
-	-- local closed_floating = false
+local function close_floating_windows()
 	for _, win in ipairs(vim.api.nvim_list_wins()) do
 		local win_config = vim.api.nvim_win_get_config(win)
 		if win_config.relative ~= "" then
@@ -188,6 +176,20 @@ local function smart_close()
 			end
 		end
 	end
+end
+local function smart_close()
+	-- Handle completion popups first, before any mode changes
+	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
+		close_floating_windows()
+		return
+	end
+	-- Step 4: Close telescope if active
+	if telescope_close_any() then
+		return -- Telescope closed, we're done
+	end
+	-- Step 5: Close floating windows
+	-- local closed_floating = false
+	close_floating_windows()
 	-- if closed_floating then
 	-- return -- Stay in current mode after closing floating windows
 	-- end
