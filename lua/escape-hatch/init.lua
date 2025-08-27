@@ -222,6 +222,7 @@ local function smart_close()
 		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
 			if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype ~= "" then
 				local name = vim.api.nvim_buf_get_name(buf)
+				print(name)
 				if not preserve_buffer(name, vim.bo[buf].buftype) or name ~= "terminal" then
 					vim.api.nvim_buf_delete(buf, { force = true })
 				end
