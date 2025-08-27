@@ -389,4 +389,3 @@ function M.toggle_plugin()
 end
 
 return M
-fau
