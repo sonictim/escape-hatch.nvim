@@ -196,24 +196,24 @@ local function smart_close()
 		if config.commands.exit_terminal == "hide" then
 			vim.cmd.hide()
 			return
+		elseif config.commands.exit_terminal == "close" then
+			vim.cmd.close()
+			return
+		else
+			vim.api.nvim_feedkeys(
+				vim.api.nvim_replace_termcodes(config.commands.exit_terminal, true, false, true),
+				"n",
+				false
+			)
+			return -- Terminal exit needs to complete first
 		end
-	elseif config.commands.exit_terminal == "close" then
-		vim.cmd.close()
-		return
-	elseif
-		vim.api.nvim_feedkeys(
-			vim.api.nvim_replace_termcodes(config.commands.exit_terminal, true, false, true),
-			"n",
-			false
-		)
-		return -- Terminal exit needs to complete first
 	end
 	if mode == "v" or mode == "V" or mode == "\22" then -- visual, visual-line, visual-block
-	print("Visual Path")	
-	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+		print("Visual Path")
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
 		return
 	elseif mode ~= "n" then
-	print("Insert Path")
+		print("Insert Path")
 		vim.cmd("stopinsert")
 		return
 	end
