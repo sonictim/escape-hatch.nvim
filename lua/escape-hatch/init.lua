@@ -71,7 +71,7 @@ local function completion_active()
 	if type(config.completion_engine) == "function" then
 		return config.completion_engine()
 	end
-te
+
 	-- Handle specific engines
 	if config.completion_engine == "native" then
 		return vim.fn.pumvisible() == 1
@@ -178,11 +178,10 @@ local function smart_close()
 	print("Mode:", mode, "Bufftype:", vim.bo.buftype)
 	-- Handle completion popups first, before any mode changes
 
-if config.handle_completion_popups and mode == "i" and completion_active() then
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-e>", true, false, true), "n", false)
-    return
-end
-
+	if config.handle_completion_popups and mode == "i" and completion_active() then
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-e>", true, false, true), "n", false)
+		return
+	end
 
 	-- if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
 	-- 	print("Completion path")
