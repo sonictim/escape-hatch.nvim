@@ -206,7 +206,7 @@ local function smart_close()
 		vim.cmd("stopinsert")
 		return
 	end
-	print("Special Buffers")
+	-- print("Special Buffers")
 	-- Step 2: Close any non editable buffers
 	if config.close_all_special_buffers then
 		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
@@ -226,7 +226,7 @@ local function smart_close()
 			end
 		end
 	end
-	print("Clear Search")
+	-- print("Clear Search")
 	-- Step 3: Clear search highlighting
 	vim.cmd("nohlsearch")
 end
