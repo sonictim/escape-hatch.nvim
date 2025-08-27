@@ -40,7 +40,7 @@ local default_config = {
 		level_5 = "Escape + Quit All",
 		level_6 = "Escape + Force Quit All",
 	},
-	preserve_buffers = {uuu:
+	preserve_buffers = {
 		"tutor", -- Vimtutor buffers
 		"lualine", -- Lualine statusline
 		"neo%-tree", -- Neo-tree file explorer
