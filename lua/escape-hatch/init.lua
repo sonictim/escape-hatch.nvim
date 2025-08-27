@@ -1,3 +1,4 @@
+fal
 -- escape-hatch.nvim
 -- The escalating escape system for Neovim
 -- More escapes = more final actions
@@ -40,7 +41,7 @@ local default_config = {
 		level_5 = "Escape + Quit All",
 		level_6 = "Escape + Force Quit All",
 	},
-	preserve_buffers = {
+	preserve_buffers = {uuu:
 		"tutor", -- Vimtutor buffers
 		"lualine", -- Lualine statusline
 		"neo%-tree", -- Neo-tree file explorer
@@ -166,7 +167,6 @@ local function smart_close()
 	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
 		print("Completion Triggered")
 		vim.api.nvim_input("<Esc>")
-		return
 	end
 	-- Step 4: Close telescope if active
 	if telescope_close_any() then
@@ -390,3 +390,4 @@ function M.toggle_plugin()
 end
 
 return M
+fau
