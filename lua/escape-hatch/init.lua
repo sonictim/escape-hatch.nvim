@@ -129,11 +129,21 @@ local function smart_close()
 		return -- Telescope closed, we're done
 	end
 	-- Step 5: Close floating windows
+	local closed_floating = false
 	for _, win in ipairs(vim.api.nvim_list_wins()) do
 		local win_config = vim.api.nvim_win_get_config(win)
 		if win_config.relative ~= "" then
-			vim.api.nvim_win_close(win, true)
+			local buf = vim.api.nvim_win_get_buf(win)
+			local ft = vim.bo[buf].filetype
+			-- Only close certain types of floating windows, not persistent UI
+			if ft ~= "lualine" and not ft:match("^neo%-tree") then
+				vim.api.nvim_win_close(win, true)
+				closed_floating = true
+			end
 		end
+	end
+	if closed_floating then
+		return -- Stay in current mode after closing floating windows
 	end
 	-- Step 1: Exit any mode to normal mode
 	local mode = vim.fn.mode()
