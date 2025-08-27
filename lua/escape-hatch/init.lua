@@ -193,21 +193,22 @@ local function smart_close()
 	--  testing something stupid
 	-- Step 1: Exit any mode to normal mode
 	if buftype == "terminal" then
-		print("Terminal Path")
-		if config.handle_terminal == "hide" then
-			vim.cmd.hide()
-			return
-		end
-	elseif config.handle_terminal == "close" then
-		vim.cmd.close()
-		return
+		-- 	print("Terminal Path")
+		-- 	if config.handle_terminal == "hide" then
+		-- 		vim.cmd.hide()
+		-- 		return
+		-- 	end
+		-- elseif config.handle_terminal == "close" then
+		-- 	vim.cmd.close()
+		-- 	return
+		--    else
+		vim.api.nvim_feedkeys(
+			vim.api.nvim_replace_termcodes(config.commands.exit_terminal, true, false, true),
+			"n",
+			false
+		)
+		return -- Terminal exit needs to complete first
 	end
-	-- vim.api.nvim_feedkeys(
-	-- 	vim.api.nvim_replace_termcodes(config.commands.exit_terminal, true, false, true),
-	-- 	"n",
-	-- 	false
-	-- )
-	-- return -- Terminal exit needs to complete first
 	if mode == "v" or mode == "V" or mode == "\22" then -- visual, visual-line, visual-block
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
 		return
