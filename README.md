@@ -65,7 +65,10 @@ require("escape-hatch").setup({
 
     -- Behavior options
     close_all_special_buffers = false,  -- Close all help/quickfix/etc buffers on single escape
-    handle_completion_popups = false,   -- Close Auto Complete Suggestion Popup on single escape
+    handle_completion_popups = false,   -- Close completion popups on single escape (stays in insert mode)
+    
+    -- Completion engine detection
+    completion_engine = "auto",         -- "auto" (default), "nvim-cmp", "blink", "coq", "native", or custom function
 
     -- Custom commands (optional)
     commands = {
@@ -101,6 +104,38 @@ require("escape-hatch").setup({
     },
 })
 ```
+
+## 🔧 Completion Engine Configuration
+
+The `completion_engine` option controls how escape-hatch detects active completion popups:
+
+```lua
+require("escape-hatch").setup({
+    handle_completion_popups = true,
+    completion_engine = "auto",  -- Choose detection method
+})
+```
+
+**Available options:**
+- `"auto"` (default) - Auto-detects nvim-cmp, blink.cmp, coq_nvim, and native completion
+- `"nvim-cmp"` - Only check for nvim-cmp completion
+- `"blink"` - Only check for blink.cmp completion  
+- `"coq"` - Only check for coq_nvim completion
+- `"native"` - Only check for native Vim completion (`pumvisible()`)
+- Custom function - Define your own detection logic
+
+**Custom function example:**
+```lua
+require("escape-hatch").setup({
+    completion_engine = function()
+        -- Your custom completion detection logic
+        return require("my_completion_plugin").is_visible()
+    end
+})
+```
+
+**Performance tip:** If you know which completion engine you use, set it specifically (e.g., `"blink"`) instead of `"auto"` for faster detection.
+
 ## ⚠️ Multi-Key Sequence Behavior
 
 Due to Neovim's keymap system, there is a brief delay (controlled by `timeoutlen`) when pressing single escape while the system waits to see if you'll press additional escapes. This is unavoidable with multi-level key sequences.

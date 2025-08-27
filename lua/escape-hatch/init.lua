@@ -15,6 +15,10 @@ local default_config = {
 	enable_6_esc = false, -- Force quit all (nuclear - disabled by default)
 	close_all_special_buffers = false,
 	handle_completion_popups = false,
+	
+	-- Completion engine detection (auto-detects common engines)
+	-- Can be "auto", "nvim-cmp", "blink", "coq", "native", or a custom function
+	completion_engine = "auto",
 
 	plugin_enabled = true,
 	-- Custom commands (optional overrides)
@@ -63,18 +67,50 @@ local function telescope_available()
 end
 
 local function completion_active()
-	-- Check for native completion
-	if vim.fn.pumvisible() == 1 then
-		return true
+	-- If user provided a custom function, use it
+	if type(config.completion_engine) == "function" then
+		return config.completion_engine()
 	end
+	
+	-- Handle specific engines
+	if config.completion_engine == "native" then
+		return vim.fn.pumvisible() == 1
+	elseif config.completion_engine == "nvim-cmp" then
+		local ok, cmp = pcall(require, "cmp")
+		return ok and cmp.visible()
+	elseif config.completion_engine == "blink" then
+		local ok, blink = pcall(require, "blink.cmp")
+		return ok and blink.is_visible()
+	elseif config.completion_engine == "coq" then
+		local ok, coq = pcall(require, "coq")
+		return ok and coq.is_visible()
+	else
+		-- Auto-detect (default behavior)
+		-- Check for native completion
+		if vim.fn.pumvisible() == 1 then
+			return true
+		end
 
-	-- Check for nvim-cmp (if installed)
-	local ok, cmp = pcall(require, "cmp")
-	if ok and cmp.visible() then
-		return true
+		-- Check for nvim-cmp (if installed)
+		local ok, cmp = pcall(require, "cmp")
+		if ok and cmp.visible() then
+			return true
+		end
+
+		-- Check for blink.cmp (if installed)
+		local ok_blink, blink = pcall(require, "blink.cmp")
+		if ok_blink and blink.is_visible() then
+			return true
+		end
+
+		-- Check for coq_nvim (if installed)
+		local ok_coq, coq = pcall(require, "coq")
+		if ok_coq and coq.is_visible() then
+			return true
+		end
+
+		return false
 	end
-
-	return false
 end
 
 local function preserve_buffer(buf_name, buf_type)
