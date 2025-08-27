@@ -15,7 +15,6 @@ local default_config = {
 	enable_6_esc = false, -- Force quit all (nuclear - disabled by default)
 	close_all_special_buffers = false,
 	handle_completion_popups = false,
-	handle_terminal = "keep",
 
 	-- Completion engine detection (auto-detects common engines)
 	-- Can be "auto", "nvim-cmp", "blink", "coq", "native", or a custom function
@@ -201,7 +200,7 @@ local function smart_close()
 	elseif config.commands.exit_terminal == "close" then
 		vim.cmd.close()
 		return
-	else
+	elseif
 		vim.api.nvim_feedkeys(
 			vim.api.nvim_replace_termcodes(config.commands.exit_terminal, true, false, true),
 			"n",
