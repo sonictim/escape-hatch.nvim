@@ -183,7 +183,7 @@ local function smart_close()
 		return
 	end
 	-- Step 5: Close floating windows
-	close_floating_windows()
+	-- close_floating_windows()
 
 	-- Step 1: Exit any mode to normal mode
 	local mode = vim.fn.mode()
