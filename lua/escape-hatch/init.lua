@@ -173,21 +173,26 @@ local function close_floating_windows()
 	end
 end
 local function smart_close()
+	local mode = vim.fn.mode()
+	print("Mode:", mode, "Bufftype:", vim.bo.buftype)
 	-- Handle completion popups first, before any mode changes
 	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
+		print("Completion path")
 		close_floating_windows()
 		return
 	end
 	-- Step 4: Close telescope if active
 	if telescope_close_any() then
+		print("Telescope path")
 		return
 	end
 	-- Step 5: Close floating windows
 	-- close_floating_windows()
-
+	--  testing something stupid
 	-- Step 1: Exit any mode to normal mode
 	local mode = vim.fn.mode()
 	if mode == "t" then
+		print("Terminal Path")
 		vim.api.nvim_feedkeys(
 			vim.api.nvim_replace_termcodes(config.commands.exit_terminal, true, false, true),
 			"n",
@@ -201,7 +206,7 @@ local function smart_close()
 		vim.cmd("stopinsert")
 		return
 	end
-
+	print("Special Buffers")
 	-- Step 2: Close any non editable buffers
 	if config.close_all_special_buffers then
 		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
@@ -221,7 +226,7 @@ local function smart_close()
 			end
 		end
 	end
-
+	print("Clear Search")
 	-- Step 3: Clear search highlighting
 	vim.cmd("nohlsearch")
 end
