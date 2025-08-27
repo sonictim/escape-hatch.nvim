@@ -132,9 +132,12 @@ local function smart_close()
 	local closed_floating = false
 	for _, win in ipairs(vim.api.nvim_list_wins()) do
 		local win_config = vim.api.nvim_win_get_config(win)
-		if win_config.relative ~= "" then
-			vim.api.nvim_win_close(win, true)
-			closed_floating = true
+		-- Only close floating windows that are not the current window and are actually floating
+		if win_config.relative ~= "" and win ~= vim.api.nvim_get_current_win() then
+			local success = pcall(vim.api.nvim_win_close, win, true)
+			if success then
+				closed_floating = true
+			end
 		end
 	end
 	if closed_floating then
