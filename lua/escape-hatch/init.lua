@@ -253,6 +253,9 @@ end
 
 local function smart_save_quit()
 	local name = vim.api.nvim_buf_get_name(0)
+	if vim.bo.buftype == "terminal" then
+		vim.cmd.close()
+	end
 	if name == "" and vim.bo.buftype == "" then
 		vim.cmd("q")
 	else
