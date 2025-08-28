@@ -4,6 +4,11 @@
 
 local M = {}
 
+-- Split mode variables
+local counter = 0
+local timer = nil
+local current_mode = "normal" -- Track which command set we're using
+
 -- Default configuration
 local default_config = {
 	-- Enable/disable specific escape levels
@@ -15,6 +20,20 @@ local default_config = {
 	enable_6_esc = false, -- Force quit all (nuclear - disabled by default)
 	close_all_special_buffers = false,
 	handle_completion_popups = false,
+	split_mode = false,
+	timeout = 500, -- Timer timeout in milliseconds for split mode
+
+	-- Split mode command arrays (only used when split_mode = true)
+	normal_commands = {
+		[1] = "smart_close", -- First escape: clear UI/exit modes
+		[2] = "save", -- Second escape: save
+		[3] = "quit", -- Third escape: quit
+	},
+	leader_commands = {
+		[1] = "quit", -- First leader+escape: quit
+		[2] = "quit_all", -- Second: quit all
+		[3] = "force_quit_all", -- Third: force quit all
+	},
 
 	-- Completion engine detection (auto-detects common engines)
 	-- Can be "auto", "nvim-cmp", "blink", "coq", "native", or a custom function
@@ -28,7 +47,7 @@ local default_config = {
 		quit = "q", -- Changed from ":q<CR>" to just "q"
 		quit_all = "qa", -- Changed from ":qa<CR>" to just "qa"
 		force_quit_all = "qa!", -- Changed from ":qa!<CR>" to just "qa!"
-		exit_terminal = "<C-\\><C-n>", -- This one stays the same
+		exit_terminal = "<C-\\><C-n>", -- Options: "<C-\\><C-n>", "hide", "close"
 	},
 
 	-- Descriptions for which-key integration
@@ -52,15 +71,15 @@ local default_config = {
 		"which%-key", -- Which-key popup (usually auto-closes)
 		-- Users can add more patterns here
 	},
+
+	debug = false,
 }
 
 local config = {}
 
-local dbug = false
-
-local function dprint(string)
-	if dbug then
-		print(string)
+local function dprint(...)
+	if config.debug then
+		print(...)
 	end
 end
 
@@ -209,10 +228,22 @@ local function smart_close()
 	if buftype == "terminal" then
 		dprint("Terminal Path")
 		if config.commands.exit_terminal == "hide" then
-			vim.cmd.hide()
+			-- Check if this is the last window before hiding
+			if #vim.api.nvim_list_wins() > 1 then
+				vim.cmd.hide()
+			else
+				-- If last window, use normal terminal exit instead
+				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "n", false)
+			end
 			return
 		elseif config.commands.exit_terminal == "close" then
-			vim.cmd.close()
+			-- Check if this is the last window before closing
+			if #vim.api.nvim_list_wins() > 1 then
+				vim.cmd.close()
+			else
+				-- If last window, use normal terminal exit instead
+				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "n", false)
+			end
 			return
 		else
 			vim.api.nvim_feedkeys(
@@ -278,6 +309,34 @@ local function smart_save_quit()
 		vim.cmd(config.commands.save_quit)
 	end
 end
+
+local function smart_quit()
+	if vim.fn.getcmdline() ~= "" then
+		return
+	end
+	local name = vim.api.nvim_buf_get_name(0)
+	local num_wins = #vim.api.nvim_list_wins()
+	dprint("smart_quit: buftype:", vim.bo.buftype, "num_wins:", num_wins, "name:", name)
+
+	if vim.bo.buftype == "terminal" then
+		-- Check window count right before closing (it might have changed)
+		local current_wins = #vim.api.nvim_list_wins()
+		if current_wins == 1 then
+			dprint("Last terminal window - quitting all")
+			vim.cmd("qa")
+			return
+		else
+			dprint("Closing terminal window (current wins:", current_wins, ")")
+			pcall(vim.cmd.close) -- Use pcall to handle race condition
+			return
+		end
+	end
+	if name == "" and vim.bo.buftype == "" then
+		vim.cmd("q")
+	else
+		vim.cmd(config.commands.quit)
+	end
+end
 vim.api.nvim_create_user_command("TelescopeClose", function()
 	if not telescope_close_any() then
 		vim.notify("No Telescope picker to close", vim.log.levels.INFO)
@@ -288,6 +347,20 @@ local function setup_keymaps()
 	if not config.plugin_enabled then
 		return
 	end
+
+	if config.split_mode then
+		-- Split mode: timer-based with <Esc> and <leader><Esc>
+		vim.keymap.set({ "n", "i", "v", "t", "x" }, "<Esc>", function()
+			M.handle_escape()
+		end, { desc = "Escape Hatch" })
+
+		vim.keymap.set({ "n", "i", "v", "t", "x" }, "<leader><Esc>", function()
+			M.handle_leader_escape()
+		end, { desc = "Escape Hatch Leader" })
+		return
+	end
+
+	-- Escalation mode: multiple escape sequences
 	if config.enable_1_esc then
 		vim.keymap.set({ "n", "i", "v", "t" }, "<Esc>", smart_close, { desc = "Escape" })
 	end
@@ -330,6 +403,84 @@ local function setup_keymaps()
 			smart_close()
 			nuclear_option()
 		end, { desc = "Escape + Force Quit All" })
+	end
+end
+
+-- Split mode functions
+local function execute_split_command(command_type, level)
+	if command_type == "smart_close" then
+		smart_close()
+	elseif command_type == "save" then
+		smart_save()
+	elseif command_type == "save_quit" then
+		smart_save_quit()
+	elseif command_type == "quit" then
+		smart_quit()
+	elseif command_type == "quit_all" then
+		vim.cmd(config.commands.quit_all)
+	elseif command_type == "force_quit_all" then
+		vim.cmd(config.commands.force_quit_all)
+	elseif type(command_type) == "function" then
+		command_type()
+	end
+end
+
+function M.handle_escape()
+	if not config.split_mode then
+		return -- Should not be called in escalation mode
+	end
+
+	-- Increment counter
+	counter = counter + 1
+
+	-- Execute command based on current mode
+	local cmds = (current_mode == "leader") and config.leader_commands or config.normal_commands
+	if cmds[counter] then
+		execute_split_command(cmds[counter], counter)
+	end
+
+	-- Clear existing timer
+	if timer then
+		timer:stop()
+		timer:close()
+	end
+
+	-- Set new timer to reset counter and mode
+	timer = vim.loop.new_timer()
+	timer:start(
+		config.timeout,
+		0,
+		vim.schedule_wrap(function()
+			counter = 0
+			current_mode = "normal" -- Reset to normal mode
+			timer:close()
+			timer = nil
+		end)
+	)
+end
+
+function M.handle_leader_escape()
+	if not config.split_mode then
+		return -- Should not be called in escalation mode
+	end
+
+	-- Switch to leader mode and handle like normal escape
+	current_mode = "leader"
+	M.handle_escape()
+end
+
+-- Debug functions for split mode
+function M.get_count()
+	return counter
+end
+
+function M.reset_counter()
+	counter = 0
+	current_mode = "normal"
+	if timer then
+		timer:stop()
+		timer:close()
+		timer = nil
 	end
 end
 

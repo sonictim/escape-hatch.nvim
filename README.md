@@ -29,6 +29,35 @@ An intuitive keybinding system that scales with your urgency level.
 | **5** | Escape + Quit All | Level 1 + Close all files (with unsaved warnings) |
 | **6** | Escape + Nuclear 🔥 | Level 1 + Force quit everything, discard changes |
 
+## 🔄 Split Mode (Alternative)
+
+Split mode eliminates timeout delays by using a timer-based counter system with two separate keybindings:
+
+- **`<Esc>`**: "Gentle" actions (clear UI → save → quit)
+- **`<leader><Esc>`**: "Aggressive" actions (quit → quit all → force quit all)
+
+**Benefits:**
+- ✅ No timeout delays - immediate response
+- ✅ Separate gentle vs aggressive workflows
+- ✅ Timer resets automatically after 500ms (configurable)
+
+**Usage:**
+```lua
+require("escape-hatch").setup({
+    split_mode = true,
+    timeout = 500,  -- Timer timeout in milliseconds
+})
+```
+
+**Split mode behavior:**
+- Press `<Esc>` once: Clear UI/exit modes  
+- Press `<Esc>` twice quickly: + Save file
+- Press `<Esc>` thrice quickly: + Quit
+
+- Press `<leader><Esc>` once: Quit (no save)
+- Press `<leader><Esc>` twice quickly: Quit all
+- Press `<leader><Esc>` thrice quickly: Force quit all
+
 ## 📦 Installation
 
 ### With [lazy.nvim](https://github.com/folke/lazy.nvim)
@@ -66,6 +95,22 @@ require("escape-hatch").setup({
     -- Behavior options
     close_all_special_buffers = false,  -- Close all help/quickfix/etc buffers on single escape
     handle_completion_popups = false,   -- Close completion popups on single escape (stays in insert mode)
+    
+    -- Mode selection
+    split_mode = false,                 -- Use timer-based split mode instead of escalation
+    timeout = 500,                      -- Timer timeout for split mode (milliseconds)
+    
+    -- Split mode command arrays (only used when split_mode = true)
+    normal_commands = {
+        [1] = "smart_close",            -- First <Esc>: clear UI/exit modes
+        [2] = "save",                   -- Second <Esc>: save
+        [3] = "quit",                   -- Third <Esc>: quit
+    },
+    leader_commands = {
+        [1] = "quit",                   -- First <leader><Esc>: quit
+        [2] = "quit_all",               -- Second: quit all
+        [3] = "force_quit_all",         -- Third: force quit all
+    },
     
     -- Completion engine detection
     completion_engine = "auto",         -- "auto" (default), "nvim-cmp", "blink", "coq", "native", or custom function
@@ -156,6 +201,8 @@ require("escape-hatch").setup({
 
 This behavior is fundamental to how Vim/Neovim processes ambiguous key sequences and cannot be avoided while maintaining the escalation system.
 
+**💡 Tip:** Consider using split mode (`split_mode = true`) to eliminate timeout delays entirely!
+
 ## 🚦 Safety First
 
 **Level 4 and 5** use `:q` and `:qa` which safely prompt you before closing files with unsaved changes.
@@ -220,7 +267,22 @@ require("escape-hatch").setup({
         save = "update",    -- Only save if buffer was modified
         quit_all = "wqa"    -- Save all files then quit (instead of qa)
     }
+})
 
+-- Split mode setup (no timeout delays!)
+require("escape-hatch").setup({
+    split_mode = true,
+    timeout = 300,  -- Faster reset
+    normal_commands = {
+        [1] = "smart_close",  -- <Esc>: clear UI
+        [2] = "save",         -- <Esc><Esc>: + save  
+        [3] = "save_quit",    -- <Esc><Esc><Esc>: + save & quit
+    },
+    leader_commands = {
+        [1] = "quit",         -- <leader><Esc>: quit without save
+        [2] = "quit_all",     -- <leader><Esc><Esc>: quit all
+        [3] = "force_quit_all" -- <leader><Esc><Esc><Esc>: nuclear
+    }
 })
 
 -- Dev setup
