@@ -26,8 +26,8 @@ local default_config = {
 	-- Split mode command arrays (only used when split_mode = true)
 	normal_commands = {
 		[1] = "smart_close", -- First escape: clear UI/exit modes
-		[2] = "smar_save", -- Second escape: save
-		[3] = "smart_quit", -- Third escape: quit
+		[2] = "save", -- Second escape: save
+		[3] = "quit", -- Third escape: quit
 	},
 	leader_commands = {
 		[1] = "quit", -- First leader+escape: quit
