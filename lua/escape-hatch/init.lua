@@ -353,13 +353,13 @@ local function setup_keymaps()
 
 	if config.split_mode then
 		-- Split mode: timer-based with <Esc> and <leader><Esc>
-		vim.keymap.set({ "n", "i", "v", "t", "x" }, "<Esc>", function()
+		vim.keymap.set({ "n", "i", "v", "t", "x", "c" }, "<Esc>", function()
 			M.handle_escape()
 		end, { desc = "Escape Hatch" })
 
-		vim.keymap.set({ "n", "i", "v", "t", "x" }, "<leader><Esc>", function()
+		vim.keymap.set({ "n", "i", "v", "t", "x", "c" }, "<leader><Esc>", function()
 			M.handle_leader_escape()
-		end, { desc = "Escape Hatch Leader" })
+		end, { desc = "Escape Hatch Quit without Save" })
 		return
 	end
 
