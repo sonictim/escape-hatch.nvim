@@ -312,6 +312,7 @@ end
 
 local function smart_quit()
 	dprint("smart_quit activated")
+	dprint(vim.fn.getcmdline())
 	if vim.fn.getcmdline() ~= "" then
 		dprint("commandline occupied")
 		return
