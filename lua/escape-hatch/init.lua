@@ -311,9 +311,10 @@ local function smart_save_quit()
 end
 
 local function smart_quit()
-	-- if vim.fn.getcmdline() ~= "" then
-	-- 	return
-	-- end
+	if vim.fn.getcmdline() ~= "" then
+		print("commandline occupied")
+		return
+	end
 	local name = vim.api.nvim_buf_get_name(0)
 	local num_wins = #vim.api.nvim_list_wins()
 	dprint("smart_quit: buftype:", vim.bo.buftype, "num_wins:", num_wins, "name:", name)
