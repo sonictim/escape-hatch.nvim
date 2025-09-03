@@ -306,6 +306,9 @@ local function smart_save()
 	if name == "" then
 		vim.api.nvim_feedkeys(":" .. "saveas ", "c", false) -- Unnamed buffer
 	else
+		if vim.bo.buftype == "terminal" then
+			vim.cmd.close()
+		end
 		vim.cmd(config.commands.save) -- Normal file
 	end
 end
