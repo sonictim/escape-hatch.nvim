@@ -200,46 +200,31 @@ local function close_floating_windows()
 		end
 	end
 end
+
 local function handle_terminal()
 	local mode = vim.fn.mode()
-	if vim.bo.buftype == "terminal" then
-		dprint("Terminal Path")
-		if config.commands.exit_terminal == "escape" then
-			if mode == "n" then
-				vim.cmd.hide()
-			else
-				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "n", false)
-			end
-			return true
-		elseif config.commands.exit_terminal == "hide" then
-			-- Check if this is the last window before hiding
-			if #vim.api.nvim_list_wins() > 1 then
-				vim.cmd.hide()
-			else
-				-- If last window, use normal terminal exit instead
-				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "n", false)
-			end
-			return true
-		elseif config.commands.exit_terminal == "close" then
-			-- Check if this is the last window before closing
-			if #vim.api.nvim_list_wins() > 1 then
-				vim.cmd.close()
-			else
-				-- If last window, use normal terminal exit instead
-				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "n", false)
-			end
-			return true
-		else
-			vim.api.nvim_feedkeys(
-				vim.api.nvim_replace_termcodes(config.commands.exit_terminal, true, false, true),
-				"n",
-				false
-			)
-			return true -- Terminal exit needs to complete first
-		end
-	else
+	local wins = vim.api.nvim_list_wins()
+	local comm = config.commands.exit_terminal
+	if vim.bo.buftype ~= "terminal" then
 		return false
 	end
+
+	dprint("Terminal Path")
+	if mode == "n" or comm == "hide" or comm == "close" then
+		if #wins > 1 then
+			if comm == "hide" then
+				vim.cmd.hide()
+			else
+				vim.cmd.close()
+			end
+		else
+			vim.cmd("b#")
+		end
+	else
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(comm, true, false, true), "n", false)
+	end
+
+	return true
 end
 
 local function smart_close()
