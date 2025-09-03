@@ -233,7 +233,11 @@ local function smart_close()
 	if buftype == "terminal" then
 		dprint("Terminal Path")
 		if config.commands.exit_terminal == "escape" then
-			vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "n", false)
+			if mode == "n" then
+				vim.cmd.close()
+			else
+				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-\\><C-n>", true, false, true), "n", false)
+			end
 			return
 		elseif config.commands.exit_terminal == "hide" then
 			-- Check if this is the last window before hiding
