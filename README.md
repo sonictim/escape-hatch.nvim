@@ -122,7 +122,7 @@ require("escape-hatch").setup({
         quit = "q",
         quit_all = "qa",
         force_quit_all = "qa!",
-        exit_terminal = "<C-\\><C-n>"   -- "close" and "hide" are custom commands you can put here also
+        exit_terminal = "<C-\\><C-n>"   -- "escape", "close", and "hide" are custom commands you can put here also
     },
 
     -- Custom descriptions
