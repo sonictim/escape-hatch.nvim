@@ -210,7 +210,12 @@ local function smart_close()
 	-- 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-e>", true, false, true), "n", false)
 	-- 	return
 	-- end
-
+	if mode == "c" then
+		-- Command-line mode: cancel and return to normal
+		-- Equivalent to pressing real <Esc>
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-c>", true, false, true), "n", true)
+		return
+	end
 	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
 		dprint("Completion path")
 		close_floating_windows()
