@@ -48,7 +48,7 @@ local default_config = {
 		quit_all = "qa", -- Changed from ":qa<CR>" to just "qa"
 		force_quit_all = "qa!", -- Changed from ":qa!<CR>" to just "qa!"
 		exit_terminal = "<C-\\><C-n>", -- Options: "<C-\\><C-n>", "hide", "close"
-		delete_buffer = "db",
+		delete_buffer = "bd",
 	},
 
 	-- Descriptions for which-key integration
