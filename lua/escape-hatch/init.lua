@@ -48,6 +48,7 @@ local default_config = {
 		quit_all = "qa", -- Changed from ":qa<CR>" to just "qa"
 		force_quit_all = "qa!", -- Changed from ":qa!<CR>" to just "qa!"
 		exit_terminal = "<C-\\><C-n>", -- Options: "<C-\\><C-n>", "hide", "close"
+		delete_buffer = "db",
 	},
 
 	-- Descriptions for which-key integration
@@ -316,7 +317,9 @@ local function smart_save_quit()
 		vim.cmd(config.commands.save_quit)
 	end
 end
-
+local function delete_buffer()
+	vim.cmd(config.commands.delete_buffer) -- Normal file
+end
 local function smart_quit()
 	dprint("smart_quit activated")
 	dprint(vim.fn.getcmdline())
@@ -424,6 +427,8 @@ local function execute_split_command(command_type, level)
 		smart_save()
 	elseif command_type == "save_quit" then
 		smart_save_quit()
+	elseif command_type == "delete_buffer" then
+		delete_buffer()
 	elseif command_type == "quit" then
 		smart_quit()
 	elseif command_type == "quit_all" then
