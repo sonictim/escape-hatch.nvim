@@ -159,30 +159,30 @@ local function telescope_close_any()
 	if not telescope_available() then
 		return false
 	end
+	local ok_actions, actions = pcall(require, "telescope.actions")
+	local ok_state, action_state = pcall(require, "telescope.actions.state")
+	if not (ok_actions and ok_state) then
+		return false
+	end
+
+	-- Find the prompt buffer (works even if Results window is current)
+	local prompt_bufnr
+	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+		if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].filetype == "TelescopePrompt" then
+			prompt_bufnr = buf
+			break
+		end
+	end
+	if not prompt_bufnr then
+		return false
+	end
+
+	local picker = action_state.get_current_picker(prompt_bufnr)
+	if not picker then
+		return false
+	end
+
 	if config.telescope_full_quit then
-		local ok_actions, actions = pcall(require, "telescope.actions")
-		local ok_state, action_state = pcall(require, "telescope.actions.state")
-		if not (ok_actions and ok_state) then
-			return false
-		end
-
-		-- Find the prompt buffer (works even if Results window is current)
-		local prompt_bufnr
-		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-			if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].filetype == "TelescopePrompt" then
-				prompt_bufnr = buf
-				break
-			end
-		end
-		if not prompt_bufnr then
-			return false
-		end
-
-		local picker = action_state.get_current_picker(prompt_bufnr)
-		if not picker then
-			return false
-		end
-
 		-- Schedule to be safe from insert-mode context
 		vim.schedule(function()
 			actions.close(picker.prompt_bufnr)
