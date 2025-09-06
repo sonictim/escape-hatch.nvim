@@ -189,6 +189,7 @@ local function telescope_close_any()
 		end)
 		return true
 	else
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
 		return true
 	end
 end
