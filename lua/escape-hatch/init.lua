@@ -188,6 +188,8 @@ local function telescope_close_any()
 			actions.close(picker.prompt_bufnr)
 		end)
 		return true
+	else
+		return true
 	end
 end
 local function close_floating_windows()
