@@ -22,7 +22,7 @@ local default_config = {
 	handle_completion_popups = false,
 	split_mode = false,
 	timeout = 500, -- Timer timeout in milliseconds for split mode
-
+	telescope_full_quit = true,
 	-- Split mode command arrays (only used when split_mode = true)
 	normal_commands = {
 		[1] = "smart_close", -- First escape: clear UI/exit modes
@@ -250,7 +250,7 @@ local function smart_close()
 		return
 	end
 	-- Step 4: Close telescope if active
-	if telescope_close_any() then
+	if config.telescope_full_quit and telescope_close_any() then
 		dprint("Telescope path")
 		return
 	end
