@@ -449,8 +449,9 @@ function M.handle_escape()
 	if not config.split_mode then
 		return -- Should not be called in escalation mode
 	end
+	dprint("Debug escape mode:", current_mode, "leader_timer exists:", leader_timer ~= nil, "counter:", counter)
 	if current_mode == "leader" and leader_timer == nil then
-		dprint("Leader timer expired - sending normal escape")
+		dprint("Leader timer expired - switching to normal mode")
 		counter = 0
 		current_mode = "normal"
 	end
