@@ -459,6 +459,7 @@ function M.handle_escape()
 	if not config.split_mode then
 		return -- Should not be called in escalation mode
 	end
+	dprint("Running mode:", current_mode, "level:", counter)
 	if current_mode == "leader" and counter == 0 then
 		for _, win in ipairs(vim.api.nvim_list_wins()) do
 			local buf = vim.api.nvim_win_get_buf(win)
