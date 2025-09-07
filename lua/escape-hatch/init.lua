@@ -377,8 +377,8 @@ local function setup_keymaps()
 		end, { desc = "Escape Hatch Quit without Save" })
 		vim.keymap.set({ "n", "v", "x" }, "<leader>", function()
 			M.start_leader_timer()
-			return "<leader>"
-		end, { expr = true, desc = "Start leader timer" })
+			vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<leader>", true, false, true), "n", false)
+		end, { desc = "Start leader timer" })
 		return
 	end
 
