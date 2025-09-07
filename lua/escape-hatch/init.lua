@@ -453,13 +453,15 @@ function M.handle_escape()
 	if not config.split_mode then
 		return -- Should not be called in escalation mode
 	end
-	dprint("Debug escape mode:", current_mode, "leader_timer exists:", leader_timer ~= nil, "counter:", counter)
-	if current_mode == "leader" and leader_timer == nil then
-		dprint("Leader timer expired - switching to normal mode")
-		counter = 0
-		current_mode = "normal"
+	if current_mode == "leader" and counter == 0 then
+		for _, win in ipairs(vim.api.nvim_list_wins()) do
+			local buf = vim.api.nvim_win_get_buf(win)
+			if vim.bo[buf].filetype == "WhichKey" then
+				dprint("WhichKey visible - using normal escape")
+				current_mode = "normal"
+			end
+		end
 	end
-	-- Increment counter
 	counter = counter + 1
 
 	-- Execute command based on current mode
