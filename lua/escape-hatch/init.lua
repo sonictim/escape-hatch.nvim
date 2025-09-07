@@ -11,7 +11,6 @@ local current_mode = "normal" -- Track which command set we're using
 
 -- Default configuration
 local default_config = {
-	-- Enable/disable specific escape levels
 	enable_1_esc = true,
 	enable_2_esc = true, -- Save / Exit terminal
 	enable_3_esc = true, -- Save & quit
@@ -51,7 +50,6 @@ local default_config = {
 		force_quit_all = "qa!", -- Changed from ":qa!<CR>" to just "qa!"
 		exit_terminal = "<C-\\><C-n>", -- Options: "<C-\\><C-n>", "hide", "close"
 		delete_buffer = "bd",
-		escape = "<Esc>",
 	},
 
 	-- Descriptions for which-key integration
@@ -92,8 +90,7 @@ end
 local function escape()
 	send_keys("<Esc>")
 end
--- Nuclear option - force quit all without confirmation
--- If you want confirmation, just use level 5 (:qa) which has built-in protection
+
 local function nuclear_option()
 	vim.cmd("qa!")
 end
@@ -247,15 +244,8 @@ local function smart_close()
 	local mode = vim.fn.mode()
 	local buftype = vim.bo.buftype
 	dprint("Mode:", mode, "Bufftype:", vim.bo.buftype)
-	-- Handle completion popups first, before any mode changes
 
-	-- if config.handle_completion_popups and mode == "i" and completion_active() then
-	-- 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-e>", true, false, true), "n", false)
-	-- 	return
-	-- end
 	if mode == "c" then
-		-- Command-line mode: cancel and return to normal
-		-- Equivalent to pressing real <Esc>
 		send_keys("<C-c>")
 		return true
 	end
@@ -264,15 +254,11 @@ local function smart_close()
 		close_floating_windows()
 		return true
 	end
-	-- Step 4: Close telescope if active
 	if telescope_close_any() then
 		dprint("Telescope path")
 		return true
 	end
-	-- Step 5: Close floating windows
 	local r = close_floating_windows()
-	--  testing something stupid
-	-- Step 1: Exit any mode to normal mode
 	if handle_terminal() then
 		return true
 	end
@@ -285,8 +271,6 @@ local function smart_close()
 		vim.cmd("stopinsert")
 		return true
 	end
-	-- dprint("Special Buffers")
-	-- Step 2: Close any non editable buffers
 	if config.close_all_special_buffers then
 		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
 			if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype ~= "" then
@@ -308,8 +292,6 @@ local function smart_close()
 			end
 		end
 	end
-	-- dprint("Clear Search")
-	-- Step 3: Clear search highlighting
 	vim.cmd("nohlsearch")
 	return r
 end
@@ -464,17 +446,7 @@ function M.handle_escape()
 	if not config.split_mode then
 		return -- Should not be called in escalation mode
 	end
-	-- :w
-	-- dprint("Running mode:", current_mode, "level:", counter)
-	if current_mode == "leader" and counter == 0 then
-		for _, win in ipairs(vim.api.nvim_list_wins()) do
-			local buf = vim.api.nvim_win_get_buf(win)
-			if vim.bo[buf].filetype == "WhichKey" then
-				dprint("WhichKey visible - using normal escape")
-				current_mode = "normal"
-			end
-		end
-	end
+
 	counter = counter + 1
 
 	-- Execute command based on current mode
@@ -494,7 +466,6 @@ function M.handle_escape()
 	timer:start(config.timeout, 0, function()
 		counter = 0
 		current_mode = "normal" -- Reset to normal mode
-		-- dprint("Timer reset - counter:", counter, "mode:", current_mode)
 		timer:close()
 		timer = nil
 	end)
@@ -508,7 +479,6 @@ function M.handle_leader_escape()
 	M.handle_escape()
 end
 
--- Debug functions for split mode
 function M.get_count()
 	return counter
 end
@@ -528,7 +498,6 @@ function M.setup(user_config)
 	-- Merge user config with defaults
 	config = vim.tbl_deep_extend("force", default_config, user_config or {})
 
-	-- Set up the keymaps
 	setup_keymaps()
 
 	-- Print setup confirmation
