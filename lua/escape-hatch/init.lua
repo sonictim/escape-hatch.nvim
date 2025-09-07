@@ -452,6 +452,9 @@ function M.handle_escape()
 	-- If we're in which-key and this is NOT part of an active escape sequence,
 	-- send normal escape instead of processing through escape hatch
 	local filetype = vim.bo.filetype
+	local bufname = vim.api.nvim_buf_get_name(0)
+	print("Debug - filetype:", filetype, "counter:", counter, "mode:", current_mode, "bufname:", bufname)
+	
 	if filetype == "WhichKey" and counter == 0 and current_mode == "normal" then
 		print("Which Key Path")
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
