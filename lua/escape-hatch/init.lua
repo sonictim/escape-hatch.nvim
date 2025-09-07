@@ -375,6 +375,10 @@ local function setup_keymaps()
 		vim.keymap.set({ "n", "i", "v", "t", "x", "c" }, "<leader><Esc>", function()
 			M.handle_leader_escape()
 		end, { desc = "Escape Hatch Quit without Save" })
+		vim.keymap.set({ "n", "v", "x" }, "<leader>", function()
+			M.start_leader_timer()
+			return "<leader>"
+		end, { expr = true, desc = "Start leader timer" })
 		return
 	end
 
@@ -481,9 +485,9 @@ function M.handle_escape()
 	end)
 end
 
-function M.handle_leader_escape()
+function M.start_leader_timer()
 	if not config.split_mode then
-		return -- Should not be called in escalation mode
+		return
 	end
 	if leader_timer then
 		leader_timer:stop()
@@ -494,7 +498,13 @@ function M.handle_leader_escape()
 		leader_timer:close()
 		leader_timer = nil
 	end)
-	-- Switch to leader mode and handle like normal escape
+	current_mode = "leader"
+end
+
+function M.handle_leader_escape()
+	if not config.split_mode then
+		return -- Should not be called in escalation mode
+	end
 	current_mode = "leader"
 	M.handle_escape()
 end
