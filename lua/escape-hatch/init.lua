@@ -31,7 +31,7 @@ local default_config = {
 		[4] = "quit_all",
 	},
 	leader_commands = {
-		[1] = nil,
+		[1] = "escape",
 		[2] = "delete_buffer", -- First leader+escape: quit
 		[3] = "quit_all", -- Second: quit all
 		[4] = "force_quit_all", -- Third: force quit all
@@ -86,7 +86,12 @@ local function dprint(...)
 		print(...)
 	end
 end
-
+local function send_keys(keys)
+	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "n", false)
+end
+local function escape()
+	send_keys("<Esc>")
+end
 -- Nuclear option - force quit all without confirmation
 -- If you want confirmation, just use level 5 (:qa) which has built-in protection
 local function nuclear_option()
@@ -192,7 +197,7 @@ local function telescope_close_any()
 		end)
 		return true
 	else
-		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+		escape()
 		return true
 	end
 end
@@ -232,7 +237,7 @@ local function handle_terminal()
 			vim.cmd("b#")
 		end
 	else
-		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(comm, true, false, true), "n", false)
+		send_keys(comm)
 	end
 
 	return true
@@ -251,7 +256,7 @@ local function smart_close()
 	if mode == "c" then
 		-- Command-line mode: cancel and return to normal
 		-- Equivalent to pressing real <Esc>
-		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-c>", true, false, true), "n", true)
+		send_keys("<C-c>")
 		return true
 	end
 	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
@@ -273,7 +278,7 @@ local function smart_close()
 	end
 	if mode == "v" or mode == "V" or mode == "\22" then -- visual, visual-line, visual-block
 		dprint("Visual Path")
-		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+		escape()
 		return true
 	elseif mode ~= "n" then
 		dprint("Insert Path")
@@ -330,6 +335,7 @@ local function smart_save_quit()
 		vim.cmd(config.commands.save_quit)
 	end
 end
+
 local function delete_buffer()
 	vim.cmd(config.commands.delete_buffer) -- Normal file
 end
@@ -435,6 +441,8 @@ end
 local function execute_split_command(command_type, level)
 	if command_type == "smart_close" then
 		smart_close()
+	elseif command_type == "escape" then
+		escape()
 	elseif command_type == "save" then
 		smart_save()
 	elseif command_type == "save_quit" then
