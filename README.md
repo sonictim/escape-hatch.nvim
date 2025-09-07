@@ -2,61 +2,58 @@
 
 **The escalating escape system for Neovim**
 
-An intuitive keybinding system that scales with your urgency level.
+More escapes = more final actions. Fully customizable to your workflow.
 
 > **Finally! A way to quit Vim that doesn't require a Stack Overflow search.** 
 > 
-> We've all been there: trapped in Vim, mashing keys, trying `:exit`, `:leave`, `:please-let-me-out`. Those days are over. Now you just press Escape until you're free. The more desperate you get, the more escapes you press, and eventually you'll break free. It's like a panic button that scales with your panic level.
+> We've all been there: trapped in Vim, mashing keys, trying `:exit`, `:leave`, `:please-let-me-out`. Those days are over. Choose your path: `<Esc>` for smart cleanup with saves, `<leader><Esc>` for direct actions, or use both. Each path escalates - more presses = more final actions. Fully customizable to your workflow.
 
 ## ✨ Features
 
-- **Mode agnostic**: Every escape level works from any mode (insert, visual, terminal, normal)
-- **Additive escalation**: Each level builds on the previous one consistently
-- **Universal escape**: Level 1 handles all "get me out" scenarios
-- **Safe by default**: Destructive actions require more deliberate keypresses
-- **Smart context**: Automatically handles Telescope, LSP floats, and UI windows
-- **Configurable**: Enable/disable levels, customize commands
-- **No conflicts**: Enhances built-in Vim behaviors without breaking them
+- **Zero delays**: Immediate response with timer-based escalation
+- **Mode agnostic**: Works from any mode (insert, visual, terminal, normal)
+- **Flexible paths**: Use `<Esc>`, `<leader><Esc>`, or both - your choice
+- **Perfect integrations**: No conflicts with which-key, telescope, or other plugins
+- **Smart context**: Automatically handles floating windows, completion popups, terminals
+- **Highly customizable**: Customize commands, sequences, timeouts, and behavior
+- **Safe by default**: Destructive actions require more deliberate sequences
 
-## 🎯 The Escalation System
+## 🎯 Default Escalation Paths
 
-| Escapes | Action | Description |
+Choose which paths you want enabled and customize their commands:
+
+### **Normal Path (`<Esc>`)** - Smart Cleanup (Default)
+Clean UI → Save → Quit → Quit All
+
+| Presses | Command | Description |
 |---------|--------|-------------|
-| **1** | Escape | Clear/Exit mode + Close UI windows |
-| **2** | Escape + Save | Level 1 + Save current file |
-| **3** | Escape + Save + Quit | Level 2 + Close current file |
-| **4** | Escape + Quit | Level 1 + Close file (with unsaved warning) |
-| **5** | Escape + Quit All | Level 1 + Close all files (with unsaved warnings) |
-| **6** | Escape + Nuclear 🔥 | Level 1 + Force quit everything, discard changes |
+| **1** | `smart_close` | Clear modes + Close floating windows + Exit UI |
+| **2** | `save` | Everything above + Save current file |
+| **3** | `quit` | Everything above + Close current file |
+| **4** | `quit_all` | Everything above + Close all files |
 
-## 🔄 Split Mode (Alternative)
+### **Leader Path (`<leader><Esc>`)** - Direct Actions (Default)
+Escape → Delete → Quit → Nuclear
 
-Split mode eliminates timeout delays by using a timer-based counter system with two separate keybindings:
+| Presses | Command | Description |
+|---------|--------|-------------|
+| **1** | `escape` | Regular escape (minimal intervention) |
+| **2** | `delete_buffer` | Remove current buffer |
+| **3** | `quit_all` | Close all files (with unsaved warnings) |
+| **4** | `force_quit_all` | Nuclear option - force quit everything |
 
-- **`<Esc>`**: "Gentle" actions (clear UI → save → quit)
-- **`<leader><Esc>`**: "Aggressive" actions (quit → quit all → force quit all)
+Uses a timer-based counter system (400ms default) that tracks rapid sequences:
 
-**Benefits:**
-- ✅ No timeout delays - immediate response
-- ✅ Separate gentle vs aggressive workflows
-- ✅ Timer resets automatically after 500ms (configurable)
+- **Immediate response** - no waiting for timeout delays
+- **Independent paths** - each keybinding maintains its own sequence  
+- **Auto-reset** - timer resets after inactivity
+- **Which-key friendly** - `<leader><Esc>` level 1 sends regular escape for perfect integration
 
-**Usage:**
-```lua
-require("escape-hatch").setup({
-    split_mode = true,
-    timeout = 500,  -- Timer timeout in milliseconds
-})
-```
-
-**Split mode behavior:**
-- Press `<Esc>` once: Clear UI/exit modes  
-- Press `<Esc>` twice quickly: + Save file
-- Press `<Esc>` thrice quickly: + Quit
-
-- Press `<leader><Esc>` once: Quit (no save)
-- Press `<leader><Esc>` twice quickly: Quit all
-- Press `<leader><Esc>` thrice quickly: Force quit all
+**Perfect for:**
+- **Daily workflows** - Normal path handles 95% of escape scenarios smartly
+- **Power users** - Leader path provides direct buffer/quit controls  
+- **Which-key users** - Zero conflicts, seamless integration
+- **Plugin compatibility** - Works with Telescope, completion engines, terminals
 
 ## 📦 Installation
 
@@ -83,37 +80,36 @@ use {
 ## ⚙️ Configuration
 
 ```lua
-require("escape-hatch").setup({
-    -- Enable/disable specific escape levels
-    enable_1_esc = true,   -- Escape (exit mode + clear UI)
-    enable_2_esc = true,   -- Escape + Save
-    enable_3_esc = true,   -- Escape + Save + Quit
-    enable_4_esc = true,   -- Escape + Quit (safe)
-    enable_5_esc = true,   -- Escape + Quit All (safe)
-    enable_6_esc = false,  -- Nuclear option (disabled by default for safety)
+-- Basic setup (both paths enabled with defaults)
+require("escape-hatch").setup()
 
-    -- Behavior options
-    close_all_special_buffers = false,  -- Close all help/quickfix/etc buffers on single escape
-    handle_completion_popups = false,   -- Close completion popups on single escape (stays in insert mode)
+-- Custom configuration
+require("escape-hatch").setup({
+    -- Choose which paths to enable
+    normal_mode = true,                 -- Enable <Esc> sequences
+    leader_mode = true,                 -- Enable <leader><Esc> sequences
     
-    -- Mode selection
-    split_mode = false,                 -- Use timer-based split mode instead of escalation
-    timeout = 500,                      -- Timer timeout for split mode (milliseconds)
+    -- Timer and behavior
+    timeout = 400,                      -- Timer reset timeout (milliseconds)
+    close_all_special_buffers = false,  -- Close all help/quickfix/etc buffers on smart_close
+    handle_completion_popups = false,   -- Close completion popups on smart_close (stays in insert mode)
     
-    -- Split mode command arrays (only used when split_mode = true)
+    -- Customize command sequences
     normal_commands = {
-        [1] = "smart_close",            -- First <Esc>: clear UI/exit modes
-        [2] = "save",                   -- Second <Esc>: save
-        [3] = "quit",                   -- Third <Esc>: quit
+        [1] = "smart_close",            -- <Esc>: smart cleanup
+        [2] = "save",                   -- <Esc><Esc>: + save
+        [3] = "quit",                   -- <Esc><Esc><Esc>: + quit
+        [4] = "quit_all",               -- <Esc><Esc><Esc><Esc>: + quit all
     },
     leader_commands = {
-        [1] = "quit",                   -- First <leader><Esc>: quit
-        [2] = "quit_all",               -- Second: quit all
-        [3] = "force_quit_all",         -- Third: force quit all
+        [1] = "escape",                 -- <leader><Esc>: regular escape
+        [2] = "delete_buffer",          -- <leader><Esc><Esc>: delete buffer
+        [3] = "quit_all",               -- <leader><Esc><Esc><Esc>: quit all (no save)
+        [4] = "force_quit_all",         -- <leader><Esc><Esc><Esc><Esc>: nuclear
     },
     
     -- Completion engine detection
-    completion_engine = "auto",         -- "auto" (default), "nvim-cmp", "blink", "coq", "native", or custom function
+    completion_engine = "auto",         -- "auto", "nvim-cmp", "blink", "coq", "native", or custom function
 
     -- Custom commands (optional)
     commands = {
@@ -122,30 +118,15 @@ require("escape-hatch").setup({
         quit = "q",
         quit_all = "qa",
         force_quit_all = "qa!",
-        exit_terminal = "<C-\\><C-n>"   -- "escape", "close", and "hide" are custom commands you can put here also
+        exit_terminal = "<C-\\><C-n>",   -- Terminal exit behavior
+        delete_buffer = "bd",
     },
 
-    -- Custom descriptions
-    descriptions = {
-        level_1 = "Escape",
-        level_2 = "Escape + Save",
-        level_3 = "Escape + Save + Quit", 
-        level_4 = "Escape + Quit",
-        level_5 = "Escape + Quit All",
-        level_6 = "Escape + Force Quit All"
-    },
-
-    -- UI elements to preserve (not close with escape)
+    -- UI elements to preserve (not close with smart_close)
     preserve_buffers = {
-        "tutor",      -- Vimtutor buffers
-        "lualine",    -- Lualine statusline  
-        "neo%-tree",  -- Neo-tree file explorer
-        "nvim%-tree", -- Nvim-tree file explorer
-        "alpha",      -- Alpha dashboard
-        "dashboard",  -- Dashboard
-        "trouble",    -- Trouble diagnostics
-        "which%-key", -- Which-key popup
-        -- Users can add more patterns here
+        "tutor", "lualine", "neo%-tree", "nvim%-tree", 
+        "alpha", "dashboard", "trouble", "which%-key",
+        -- Add your own patterns here
     },
 })
 ```
@@ -181,40 +162,62 @@ require("escape-hatch").setup({
 
 **Performance tip:** If you know which completion engine you use, set it specifically (e.g., `"blink"`) instead of `"auto"` for faster detection.
 
-## ⚠️ Multi-Key Sequence Behavior
+## ⚡ Timer-Based System
 
-Due to Neovim's keymap system, there is a brief delay (controlled by `timeoutlen`) when pressing single escape while the system waits to see if you'll press additional escapes. This is unavoidable with multi-level key sequences.
+The plugin uses a 400ms timer (configurable) to track rapid key sequences within each path. This eliminates the timeout delays of traditional multi-key mappings:
 
-**To reduce the delay:**
+- **Immediate response**: Each keypress executes instantly
+- **Independent paths**: `<Esc>` and `<leader><Esc>` maintain separate counters
+- **Auto-reset**: Counter resets to 1 after timeout period
+
 ```lua
--- Set a shorter timeout globally (affects all multi-key sequences)
-vim.o.timeoutlen = 200  -- Default is usually 1000ms. Less than 200 is not recommended
-
 require("escape-hatch").setup({
-  -- your config
+    timeout = 300,  -- Faster reset for rapid sequences
+    timeout = 600,  -- Slower reset for more deliberate sequences
 })
 ```
 
-**Trade-offs:**
-- **Shorter timeout**: Faster escape response, but other multi-key mappings (like `<leader>` sequences) will also timeout faster
-- **Default timeout**: Longer escape delay, but preserves your existing keymap timing
+**No more waiting for Vim's `timeoutlen`** - each escape action happens immediately!
 
-This behavior is fundamental to how Vim/Neovim processes ambiguous key sequences and cannot be avoided while maintaining the escalation system.
+## 🎛️ Single Path Setups
 
-**💡 Tip:** Consider using split mode (`split_mode = true`) to eliminate timeout delays entirely!
+You can enable just one path for simpler workflows:
+
+**Normal path only (just `<Esc>`):**
+```lua
+require("escape-hatch").setup({
+    normal_mode = true,
+    leader_mode = false,
+})
+```
+
+**Leader path only (just `<leader><Esc>`):**
+```lua
+require("escape-hatch").setup({
+    normal_mode = false,
+    leader_mode = true,
+})
+```
+
+**Custom single path with different commands:**
+```lua
+require("escape-hatch").setup({
+    normal_mode = true,
+    leader_mode = false,
+    normal_commands = {
+        [1] = "smart_close",  -- Clean up UI
+        [2] = "save_quit",    -- Save and quit immediately  
+        [3] = "quit_all",     -- Quit everything
+        [4] = "force_quit_all" -- Nuclear option
+    },
+})
+```
 
 ## 🚦 Safety First
 
-**Level 4 and 5** use `:q` and `:qa` which safely prompt you before closing files with unsaved changes.
+**Normal path levels 3-4** and **leader path level 3** use `:q` and `:qa` which safely prompt before closing files with unsaved changes.
 
-The **nuclear option** (6 escapes) uses `:qa!` and is **disabled by default** because it immediately force quits everything without any confirmation or protection.
-
-To enable the nuclear option:
-```lua
-require("escape-hatch").setup({
-    enable_6_esc = true  -- ⚠️ Will force quit without any confirmation!
-})
-```
+The **nuclear option** (leader path level 4) uses `:qa!` and immediately force quits everything. Use with caution!
 
 ## 🛠️ Utility Functions
 
@@ -253,45 +256,56 @@ Traditional Neovim configs scatter save/quit commands across random keybindings 
 ## 🎨 Examples
 
 ```lua
--- Basic setup (gets levels 1-5, nuclear disabled)
+-- Basic setup (both paths enabled with defaults)
 require("escape-hatch").setup()
-
--- Enable nuclear option
-require("escape-hatch").setup({
-    enable_6_esc = true  -- ⚠️ Dangerous!
-})
 
 -- Custom commands
 require("escape-hatch").setup({
     commands = {
-        save = "update",    -- Only save if buffer was modified
-        quit_all = "wqa"    -- Save all files then quit (instead of qa)
+        save = "update",        -- Only save if buffer was modified
+        quit_all = "wqa",       -- Save all files then quit (instead of qa)
+        delete_buffer = "bw",   -- Wipe buffer instead of delete
     }
 })
 
--- Split mode setup (no timeout delays!)
+-- Faster timer reset for rapid workflows
 require("escape-hatch").setup({
-    split_mode = true,
-    timeout = 300,  -- Faster reset
+    timeout = 300,  -- Reset timer faster
+})
+
+-- Completely custom sequences
+require("escape-hatch").setup({
     normal_commands = {
-        [1] = "smart_close",  -- <Esc>: clear UI
-        [2] = "save",         -- <Esc><Esc>: + save  
-        [3] = "save_quit",    -- <Esc><Esc><Esc>: + save & quit
+        [1] = "smart_close",   -- Clean UI
+        [2] = "save",         -- Save file
+        [3] = "save_quit",    -- Save and quit immediately
+        [4] = "quit_all",     -- Quit everything
     },
     leader_commands = {
-        [1] = "quit",         -- <leader><Esc>: quit without save
-        [2] = "quit_all",     -- <leader><Esc><Esc>: quit all
-        [3] = "force_quit_all" -- <leader><Esc><Esc><Esc>: nuclear
+        [1] = "delete_buffer", -- Different first action
+        [2] = "quit",         -- Direct quit
+        [3] = "quit_all",     -- Quit all (safe)
+        [4] = "force_quit_all" -- Nuclear option
     }
 })
 
--- Dev setup
+-- Development workflow
 require('escape-hatch').setup({
-    enable_6_esc = true,
-    close_all_special_buffers = true,
+    close_all_special_buffers = true,  -- Aggressive cleanup
+    handle_completion_popups = true,   -- Handle completion popups
     commands = {
-        save = 'update',
-        save_quit = 'x',
+        save = 'update',               -- Only save when modified
+        delete_buffer = 'bw',          -- Wipe buffer completely
+    },
+})
+
+-- Minimal setup (normal path only, custom sequence)
+require('escape-hatch').setup({
+    normal_mode = true,
+    leader_mode = false,
+    normal_commands = {
+        [1] = "smart_close",
+        [2] = "quit_all",     -- Skip saving, go straight to quit all
     },
 })
 ```
