@@ -195,6 +195,7 @@ local function telescope_close_any()
 	end
 end
 local function close_floating_windows()
+	local r = false
 	for _, win in ipairs(vim.api.nvim_list_wins()) do
 		local win_config = vim.api.nvim_win_get_config(win)
 		if win_config.relative ~= "" then
@@ -202,9 +203,11 @@ local function close_floating_windows()
 			local ft = vim.bo[buf].filetype
 			if not preserve_buffer(vim.api.nvim_buf_get_name(buf), ft) then
 				vim.api.nvim_win_close(win, true)
+				r = true
 			end
 		end
 	end
+	return r
 end
 
 local function handle_terminal()
@@ -247,33 +250,33 @@ local function smart_close()
 		-- Command-line mode: cancel and return to normal
 		-- Equivalent to pressing real <Esc>
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-c>", true, false, true), "n", true)
-		return
+		return true
 	end
 	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
 		dprint("Completion path")
 		close_floating_windows()
-		return
+		return true
 	end
 	-- Step 4: Close telescope if active
 	if telescope_close_any() then
 		dprint("Telescope path")
-		return
+		return true
 	end
 	-- Step 5: Close floating windows
-	close_floating_windows()
+	local r = close_floating_windows()
 	--  testing something stupid
 	-- Step 1: Exit any mode to normal mode
 	if handle_terminal() then
-		return
+		return true
 	end
 	if mode == "v" or mode == "V" or mode == "\22" then -- visual, visual-line, visual-block
 		dprint("Visual Path")
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
-		return
+		return true
 	elseif mode ~= "n" then
 		dprint("Insert Path")
 		vim.cmd("stopinsert")
-		return
+		return true
 	end
 	-- dprint("Special Buffers")
 	-- Step 2: Close any non editable buffers
@@ -284,6 +287,7 @@ local function smart_close()
 				-- print(name)
 				if not preserve_buffer(name, vim.bo[buf].buftype) and vim.bo[buf].buftype ~= "terminal" then
 					vim.api.nvim_buf_delete(buf, { force = true })
+					r = true
 				end
 			end
 		end
@@ -293,12 +297,14 @@ local function smart_close()
 			local name = vim.api.nvim_buf_get_name(0)
 			if not preserve_buffer(name, vim.bo.buftype) then
 				vim.api.nvim_buf_delete(0, { force = true })
+				r = true
 			end
 		end
 	end
 	-- dprint("Clear Search")
 	-- Step 3: Clear search highlighting
 	vim.cmd("nohlsearch")
+	return r
 end
 
 local function smart_save()
@@ -481,7 +487,7 @@ function M.handle_escape()
 	timer:start(config.timeout, 0, function()
 		counter = 0
 		current_mode = "normal" -- Reset to normal mode
-		dprint("Timer reset - counter:", counter, "mode:", current_mode)
+		-- dprint("Timer reset - counter:", counter, "mode:", current_mode)
 		timer:close()
 		timer = nil
 	end)
@@ -506,6 +512,9 @@ end
 function M.handle_leader_escape()
 	if not config.split_mode then
 		return -- Should not be called in escalation mode
+	end
+	if smart_close() then
+		return
 	end
 	current_mode = "leader"
 	M.handle_escape()
