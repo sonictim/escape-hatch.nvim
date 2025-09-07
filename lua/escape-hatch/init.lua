@@ -492,7 +492,9 @@ function M.handle_leader_escape()
 	if not config.split_mode then
 		return -- Should not be called in escalation mode
 	end
-	if smart_close() then
+	local r = smart_close()
+	dprint("smart close result: ", r)
+	if r then
 		return
 	end
 	current_mode = "leader"
