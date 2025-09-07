@@ -8,7 +8,6 @@ local M = {}
 local counter = 0
 local timer = nil
 local current_mode = "normal" -- Track which command set we're using
-local leader_timer = nil
 
 -- Default configuration
 local default_config = {
@@ -22,7 +21,7 @@ local default_config = {
 	close_all_special_buffers = false,
 	handle_completion_popups = false,
 	split_mode = false,
-	timeout = 500, -- Timer timeout in milliseconds for split mode
+	timeout = 400, -- Timer timeout in milliseconds for split mode
 	telescope_full_quit = true,
 	-- Split mode command arrays (only used when split_mode = true)
 	normal_commands = {
@@ -373,7 +372,6 @@ local function setup_keymaps()
 	end
 
 	if config.split_mode then
-		-- Split mode: timer-based with <Esc> and <leader><Esc>
 		vim.keymap.set({ "n", "i", "v", "t", "x", "c" }, "<Esc>", function()
 			M.handle_escape()
 		end, { desc = "Escape Hatch" })
@@ -381,10 +379,6 @@ local function setup_keymaps()
 		vim.keymap.set({ "n", "i", "v", "t", "x", "c" }, "<leader><Esc>", function()
 			M.handle_leader_escape()
 		end, { desc = "Escape Hatch Quit without Save" })
-		-- vim.keymap.set({ "n", "v", "x" }, "<leader>", function()
-		-- 	M.start_leader_timer()
-		-- 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<leader>", true, false, true), "n", false)
-		-- end, { desc = "Start leader timer" })
 		return
 	end
 
@@ -492,22 +486,6 @@ function M.handle_escape()
 		timer:close()
 		timer = nil
 	end)
-end
-
-function M.start_leader_timer()
-	if not config.split_mode then
-		return
-	end
-	if leader_timer then
-		leader_timer:stop()
-		leader_timer:close()
-	end
-	leader_timer = vim.loop.new_timer()
-	leader_timer:start(config.timeout * 2, 0, function()
-		leader_timer:close()
-		leader_timer = nil
-	end)
-	current_mode = "leader"
 end
 
 function M.handle_leader_escape()
