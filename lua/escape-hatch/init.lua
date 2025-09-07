@@ -375,10 +375,10 @@ local function setup_keymaps()
 		vim.keymap.set({ "n", "i", "v", "t", "x", "c" }, "<leader><Esc>", function()
 			M.handle_leader_escape()
 		end, { desc = "Escape Hatch Quit without Save" })
-		vim.keymap.set({ "n", "v", "x" }, "<leader>", function()
-			M.start_leader_timer()
-			vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<leader>", true, false, true), "n", false)
-		end, { desc = "Start leader timer" })
+		-- vim.keymap.set({ "n", "v", "x" }, "<leader>", function()
+		-- 	M.start_leader_timer()
+		-- 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<leader>", true, false, true), "n", false)
+		-- end, { desc = "Start leader timer" })
 		return
 	end
 
