@@ -12,8 +12,8 @@ More escapes = more final actions. Fully customizable to your workflow.
 
 - **Zero delays**: Immediate response with timer-based escalation
 - **Mode agnostic**: Works from any mode (insert, visual, terminal, normal)
-- **Flexible paths**: Use `<Esc>`, `<leader><Esc>`, or both - your choice
-- **Perfect integrations**: No conflicts with which-key, telescope, or other plugins
+- **Flexible paths**: Use `<Esc>` (with saving), `<leader><Esc>` (without saving), or both
+- **Perfect integrations**: `<leader><Esc>` provides simple escape for which-key, while `<Esc>` handles telescope and UI cleanup
 - **Smart context**: Automatically handles floating windows, completion popups, terminals
 - **Highly customizable**: Customize commands, sequences, timeouts, and behavior
 - **Safe by default**: Destructive actions require more deliberate sequences
@@ -22,7 +22,7 @@ More escapes = more final actions. Fully customizable to your workflow.
 
 Choose which paths you want enabled and customize their commands:
 
-### **Normal Path (`<Esc>`)** - Smart Cleanup (Default)
+### **Normal Path (`<Esc>`)** - Smart Cleanup with Saving (Default)
 Clean UI → Save → Quit → Quit All
 
 | Presses | Command | Description |
@@ -32,7 +32,7 @@ Clean UI → Save → Quit → Quit All
 | **3** | `quit` | Everything above + Close current file |
 | **4** | `quit_all` | Everything above + Close all files |
 
-### **Leader Path (`<leader><Esc>`)** - Direct Actions (Default)
+### **Leader Path (`<leader><Esc>`)** - Direct Actions without Saving (Default)
 Escape → Delete → Quit → Nuclear
 
 | Presses | Command | Description |
@@ -41,6 +41,10 @@ Escape → Delete → Quit → Nuclear
 | **2** | `delete_buffer` | Remove current buffer |
 | **3** | `quit_all` | Close all files (with unsaved warnings) |
 | **4** | `force_quit_all` | Nuclear option - force quit everything |
+
+**Key Advantages**: 
+- **Two distinct workflows**: Normal path preserves your work with automatic saving, while leader path provides quick exits without saving
+- **Simple vs Smart escape**: Normal path does smart cleanup (closes UI, handles modes), while leader path starts with simple escape (perfect for which-key, minimal intervention)
 
 Uses a timer-based counter system (400ms default) that tracks rapid sequences:
 
