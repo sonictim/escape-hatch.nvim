@@ -4,25 +4,18 @@
 
 local M = {}
 
--- Split mode variables
 local counter = 0
 local timer = nil
 local current_mode = "normal" -- Track which command set we're using
 
 -- Default configuration
 local default_config = {
-	enable_1_esc = true,
-	enable_2_esc = true, -- Save / Exit terminal
-	enable_3_esc = true, -- Save & quit
-	enable_4_esc = true, -- Quit (safe)
-	enable_5_esc = true, -- Quit all (safe)
-	enable_6_esc = false, -- Force quit all (nuclear - disabled by default)
 	close_all_special_buffers = false,
 	handle_completion_popups = false,
-	split_mode = false,
+	normal_mode = true,
+	leader_mode = true,
 	timeout = 400, -- Timer timeout in milliseconds for split mode
 	telescope_full_quit = true,
-	-- Split mode command arrays (only used when split_mode = true)
 	normal_commands = {
 		[1] = "smart_close", -- First escape: clear UI/exit modes
 		[2] = "save", -- Second escape: save
@@ -52,16 +45,6 @@ local default_config = {
 		delete_buffer = "bd",
 	},
 
-	-- Descriptions for which-key integration
-	descriptions = {
-		level_1 = "Escape",
-		level_2 = "Escape + Save",
-		level_3 = "Escape + Save + Quit",
-		level_4 = "Escape + Quit",
-		level_5 = "Escape + Quit All",
-		level_6 = "Escape + Force Quit All",
-	},
-
 	preserve_buffers = {
 		"tutor", -- Vimtutor buffers
 		"lualine", -- Lualine statusline
@@ -89,10 +72,6 @@ local function send_keys(keys)
 end
 local function escape()
 	send_keys("<Esc>")
-end
-
-local function nuclear_option()
-	vim.cmd("qa!")
 end
 
 -- Returns true if telescope is installed (doesn't error if not)
@@ -362,65 +341,19 @@ local function setup_keymaps()
 		return
 	end
 
-	if config.split_mode then
+	if config.normal_mode then
 		vim.keymap.set({ "n", "i", "v", "t", "x", "c" }, "<Esc>", function()
 			M.handle_escape()
 		end, { desc = "Escape Hatch" })
-
+	end
+	if config.leader_mode then
 		vim.keymap.set({ "n", "i", "v", "t", "x", "c" }, "<leader><Esc>", function()
 			M.handle_leader_escape()
 		end, { desc = "Escape Hatch Quit without Save" })
-		return
-	end
-
-	-- Escalation mode: multiple escape sequences
-	if config.enable_1_esc then
-		vim.keymap.set({ "n", "i", "v", "t" }, "<Esc>", smart_close, { desc = "Escape" })
-	end
-	-- level 2: save / exit terminal
-	if config.enable_2_esc then
-		vim.keymap.set({ "n", "i", "v", "t" }, "<Esc><Esc>", function()
-			smart_close()
-			smart_save()
-		end, { desc = "Escape + Save" })
-	end
-
-	-- Level 3: Save & quit
-
-	if config.enable_3_esc then
-		vim.keymap.set({ "n", "i", "v", "t" }, "<Esc><Esc><Esc>", function()
-			smart_close()
-			smart_save_quit()
-		end, { desc = "Escape + Save + Quit" })
-	end
-
-	-- Level 4: Quit (safe)
-	if config.enable_4_esc then
-		vim.keymap.set({ "i", "n", "v", "t" }, "<Esc><Esc><Esc><Esc>", function()
-			smart_close()
-			vim.cmd(config.commands.quit)
-		end, { desc = "Escape + Quit" })
-	end
-
-	-- Level 5: Quit all (safe)
-	if config.enable_5_esc then
-		vim.keymap.set({ "i", "n", "v", "t" }, "<Esc><Esc><Esc><Esc><Esc>", function()
-			smart_close()
-			vim.cmd(config.commands.quit_all)
-		end, { desc = "Escape + Quit All" })
-	end
-
-	-- Level 6: Nuclear option
-	if config.enable_6_esc then
-		vim.keymap.set({ "i", "n", "v", "t" }, "<Esc><Esc><Esc><Esc><Esc><Esc>", function()
-			smart_close()
-			nuclear_option()
-		end, { desc = "Escape + Force Quit All" })
 	end
 end
 
--- Split mode functions
-local function execute_split_command(command_type, level)
+local function execute_commands(command_type, level)
 	if command_type == "smart_close" then
 		smart_close()
 	elseif command_type == "escape" then
@@ -443,16 +376,12 @@ local function execute_split_command(command_type, level)
 end
 
 function M.handle_escape()
-	if not config.split_mode then
-		return -- Should not be called in escalation mode
-	end
-
 	counter = counter + 1
 
 	-- Execute command based on current mode
 	local cmds = (current_mode == "leader") and config.leader_commands or config.normal_commands
 	if cmds[counter] then
-		execute_split_command(cmds[counter], counter)
+		execute_commands(cmds[counter], counter)
 	end
 
 	-- Clear existing timer
@@ -472,9 +401,6 @@ function M.handle_escape()
 end
 
 function M.handle_leader_escape()
-	if not config.split_mode then
-		return -- Should not be called in escalation mode
-	end
 	current_mode = "leader"
 	M.handle_escape()
 end
@@ -499,51 +425,6 @@ function M.setup(user_config)
 	config = vim.tbl_deep_extend("force", default_config, user_config or {})
 
 	setup_keymaps()
-
-	-- Print setup confirmation
-	local enabled_levels = {}
-	for i = 1, 6 do -- Changed from "for i = 2, 6"
-		if config["enable_" .. i .. "_esc"] then
-			table.insert(enabled_levels, i)
-		end
-	end
-end
-
--- Utility function to show current config
-function M.show_config()
-	print("📋 escape-hatch.nvim configuration:")
-	for i = 1, 6 do -- Changed from "for i = 2, 6" to include level 1
-		local enabled = config["enable_" .. i .. "_esc"]
-		local status = enabled and "✅" or "❌"
-		local desc = config.descriptions["level_" .. i] or "Built-in"
-		print("  Level " .. i .. " (" .. i .. " esc): " .. status .. " " .. desc)
-	end
-end
-
--- Utility function to toggle nuclear option
-function M.toggle_nuclear()
-	config.enable_6_esc = not config.enable_6_esc
-
-	local modes = { "n", "i", "v", "t" }
-	if config.enable_6_esc then
-		vim.keymap.set(modes, "<Esc><Esc><Esc><Esc><Esc><Esc>", function()
-			smart_close()
-			nuclear_option()
-		end, { desc = "Escape + Force Quit All" })
-	else
-		pcall(vim.keymap.del, modes, "<Esc><Esc><Esc><Esc><Esc><Esc>")
-	end
-
-	local status = config.enable_6_esc and "enabled" or "disabled"
-	print("🔥 Nuclear option " .. status)
-end
-
--- Utility function to toggle close_all_special_buffers option
-function M.toggle_close_all_buffers()
-	config.close_all_special_buffers = not config.close_all_special_buffers
-
-	local status = config.close_all_special_buffers and "enabled" or "disabled"
-	print("Close all special buffers " .. status)
 end
 
 -- Utility function to toggle close_all_special_buffers option
@@ -552,27 +433,6 @@ function M.toggle_completion_popups()
 
 	local status = config.handle_completion_popups and "enabled" or "disabled"
 	print("Close completion popups " .. status)
-end
--- Utility function to toggle entire plugin on/off
-function M.toggle_plugin()
-	config.plugin_enabled = not config.plugin_enabled
-
-	if config.plugin_enabled then
-		setup_keymaps()
-		print("Escape-hatch enabled")
-	else
-		-- Remove all keymaps
-		local modes = { "n", "i", "v", "t" }
-		pcall(vim.keymap.del, modes, "<Esc>")
-		pcall(vim.keymap.del, modes, "<Esc><Esc>")
-		pcall(vim.keymap.del, modes, "<Esc><Esc><Esc>")
-		pcall(vim.keymap.del, modes, "<Esc><Esc><Esc><Esc>")
-		pcall(vim.keymap.del, modes, "<Esc><Esc><Esc><Esc><Esc>")
-		if config.enable_6_esc then
-			pcall(vim.keymap.del, modes, "<Esc><Esc><Esc><Esc><Esc><Esc>")
-		end
-		print("Escape-hatch disabled")
-	end
 end
 
 return M
