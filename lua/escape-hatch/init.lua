@@ -452,10 +452,17 @@ function M.handle_escape()
 	-- Increment counter
 	counter = counter + 1
 
+
 	-- Execute command based on current mode
 	local cmds = (current_mode == "leader") and config.leader_commands or config.normal_commands
 	if cmds[counter] then
-		execute_split_command(cmds[counter], counter)
+		if counter == 1 and current_mode == "leader" then
+			if not smart_close() then
+				execute_split_command(cmds[counter], counter)
+			end
+		else
+			execute_split_command(cmds[counter], counter)
+		end
 	end
 
 	-- Clear existing timer
