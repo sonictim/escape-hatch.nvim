@@ -466,17 +466,13 @@ function M.handle_escape()
 
 	-- Set new timer to reset counter and mode
 	timer = vim.loop.new_timer()
-	timer:start(
-		config.timeout,
-		0,
-		vim.schedule_wrap(function()
-			counter = 0
-			current_mode = "normal" -- Reset to normal mode
-			print("Timer resert - counter:", counter, "mode:", current_mode)
-			timer:close()
-			timer = nil
-		end)
-	)
+	timer:start(config.timeout, 0, function()
+		counter = 0
+		current_mode = "normal" -- Reset to normal mode
+		print("Timer reset - counter:", counter, "mode:", current_mode)
+		timer:close()
+		timer = nil
+	end)
 end
 
 function M.handle_leader_escape()
