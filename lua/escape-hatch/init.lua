@@ -30,9 +30,10 @@ local default_config = {
 		[3] = "quit", -- Third escape: quit
 	},
 	leader_commands = {
-		[1] = "quit", -- First leader+escape: quit
-		[2] = "quit_all", -- Second: quit all
-		[3] = "force_quit_all", -- Third: force quit all
+		[1] = nil,
+		[2] = "delete_buffer", -- First leader+escape: quit
+		[3] = "quit_all", -- Second: quit all
+		[4] = "force_quit_all", -- Third: force quit all
 	},
 
 	-- Completion engine detection (auto-detects common engines)
