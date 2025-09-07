@@ -453,6 +453,7 @@ function M.handle_escape()
 	-- send normal escape instead of processing through escape hatch
 	local filetype = vim.bo.filetype
 	if filetype == "WhichKey" and counter == 0 and current_mode == "normal" then
+		print("Which Key Path")
 		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
 		return
 	end
