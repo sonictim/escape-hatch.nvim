@@ -25,12 +25,13 @@ local default_config = {
 	telescope_full_quit = true,
 	-- Split mode command arrays (only used when split_mode = true)
 	normal_commands = {
-		[1] = "smart_close", -- First escape: clear UI/exit modes
+		[1] = "escape", -- First escape: clear UI/exit modes
 		[2] = "save", -- Second escape: save
 		[3] = "quit", -- Third escape: quit
+		[4] = "quit_all",
 	},
 	leader_commands = {
-		[1] = nil,
+		[1] = "smart_close",
 		[2] = "delete_buffer", -- First leader+escape: quit
 		[3] = "quit_all", -- Second: quit all
 		[4] = "force_quit_all", -- Third: force quit all
@@ -50,6 +51,7 @@ local default_config = {
 		force_quit_all = "qa!", -- Changed from ":qa!<CR>" to just "qa!"
 		exit_terminal = "<C-\\><C-n>", -- Options: "<C-\\><C-n>", "hide", "close"
 		delete_buffer = "bd",
+		escape = "<Esc>",
 	},
 
 	-- Descriptions for which-key integration
@@ -433,6 +435,8 @@ end
 local function execute_split_command(command_type, level)
 	if command_type == "smart_close" then
 		smart_close()
+	elseif command_type == "escape" then
+		vim.api.nvim.feedkeys(vim.api.nvim_replace_termcodes(config.commands.escape, true, false, true), "n", false)
 	elseif command_type == "save" then
 		smart_save()
 	elseif command_type == "save_quit" then
@@ -493,11 +497,6 @@ end
 function M.handle_leader_escape()
 	if not config.split_mode then
 		return -- Should not be called in escalation mode
-	end
-	local r = smart_close()
-	dprint("smart close result: ", r)
-	if r then
-		return
 	end
 	current_mode = "leader"
 	M.handle_escape()
