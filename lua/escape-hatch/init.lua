@@ -449,20 +449,21 @@ function M.handle_escape()
 		return -- Should not be called in escalation mode
 	end
 
+	-- If we're in which-key and this is NOT part of an active escape sequence,
+	-- send normal escape instead of processing through escape hatch
+	local filetype = vim.bo.filetype
+	if filetype == "WhichKey" and counter == 0 and current_mode == "normal" then
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+		return
+	end
+
 	-- Increment counter
 	counter = counter + 1
-
 
 	-- Execute command based on current mode
 	local cmds = (current_mode == "leader") and config.leader_commands or config.normal_commands
 	if cmds[counter] then
-		if counter == 1 and current_mode == "leader" then
-			if not smart_close() then
-				execute_split_command(cmds[counter], counter)
-			end
-		else
-			execute_split_command(cmds[counter], counter)
-		end
+		execute_split_command(cmds[counter], counter)
 	end
 
 	-- Clear existing timer
