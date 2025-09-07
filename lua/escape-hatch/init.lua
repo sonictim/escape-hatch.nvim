@@ -8,6 +8,7 @@ local M = {}
 local counter = 0
 local timer = nil
 local current_mode = "normal" -- Track which command set we're using
+local leader_timer = nil
 
 -- Default configuration
 local default_config = {
@@ -448,7 +449,11 @@ function M.handle_escape()
 	if not config.split_mode then
 		return -- Should not be called in escalation mode
 	end
-
+	if current_mode == "leader" and leader_timer == nil then
+		dprint("Leader timer expired - sending normal escape")
+		counter = 0
+		current_mode = "normal"
+	end
 	-- Increment counter
 	counter = counter + 1
 
@@ -469,7 +474,7 @@ function M.handle_escape()
 	timer:start(config.timeout, 0, function()
 		counter = 0
 		current_mode = "normal" -- Reset to normal mode
-		print("Timer reset - counter:", counter, "mode:", current_mode)
+		dprint("Timer reset - counter:", counter, "mode:", current_mode)
 		timer:close()
 		timer = nil
 	end)
@@ -479,7 +484,15 @@ function M.handle_leader_escape()
 	if not config.split_mode then
 		return -- Should not be called in escalation mode
 	end
-
+	if leader_timer then
+		leader_timer:stop()
+		leader_timer:close()
+	end
+	leader_timer = vim.loop.new_timer()
+	leader_timer:start(config.timeout * 2, 0, function()
+		leader_timer:close()
+		leader_timer = nil
+	end)
 	-- Switch to leader mode and handle like normal escape
 	current_mode = "leader"
 	M.handle_escape()
