@@ -14,7 +14,7 @@ local default_config = {
 	handle_completion_popups = false,
 	normal_mode = true,
 	leader_mode = true,
-	timeout = 400, -- Timer timeout in milliseconds for split mode
+	timeout = 500, -- Timer timeout in milliseconds for split mode
 	telescope_full_quit = true,
 	normal_commands = {
 		[1] = "smart_close", -- First escape: clear UI/exit modes
@@ -25,7 +25,7 @@ local default_config = {
 	leader_commands = {
 		[1] = "escape",
 		[2] = "delete_buffer", -- First leader+escape: quit
-		[3] = "quit_all", -- Second: quit all
+		[3] = "force_quit_current", -- Second: quit all
 		[4] = "force_quit_all", -- Third: force quit all
 	},
 
@@ -40,6 +40,7 @@ local default_config = {
 		save_quit = "wq", -- Changed from ":wq<CR>" to just "wq"
 		quit = "q", -- Changed from ":q<CR>" to just "q"
 		quit_all = "qa", -- Changed from ":qa<CR>" to just "qa"
+		force_quit_current = "q!",
 		force_quit_all = "qa!", -- Changed from ":qa!<CR>" to just "qa!"
 		exit_terminal = "<C-\\><C-n>", -- Options: "<C-\\><C-n>", "hide", "close"
 		delete_buffer = "bd",
@@ -368,6 +369,8 @@ local function execute_commands(command_type, level)
 		smart_quit()
 	elseif command_type == "quit_all" then
 		vim.cmd(config.commands.quit_all)
+	elseif command_type == "force_quit_current" then
+		vim.cmd(config.commands.force_quit_current)
 	elseif command_type == "force_quit_all" then
 		vim.cmd(config.commands.force_quit_all)
 	elseif type(command_type) == "function" then
