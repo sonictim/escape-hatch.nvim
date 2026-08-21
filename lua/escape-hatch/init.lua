@@ -310,8 +310,8 @@ local function smart_save()
 	end
 	-- print(("SAVE bt=%q cwd=%s name=%s"):format(
 	-- 	vim.bo.buftype, vim.inspect(vim.fn.getcwd()), vim.inspect(vim.api.nvim_buf_get_name(0))))
-	local _ = vim.api.nvim_buf_get_name(0)
-	-- print("SAVE")
+	-- local _ = vim.api.nvim_buf_get_name(0)
+	print("SAVE")
 	vim.cmd(config.commands.save)
 end
 
