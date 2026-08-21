@@ -214,7 +214,6 @@ local function handle_terminal()
 
 	local mode = vim.fn.mode()
 	local comm = config.commands.exit_terminal
-	dprint("Terminal Path")
 
 	if mode == "n" or comm == "hide" or comm == "close" then
 		if #vim.api.nvim_tabpage_list_wins(0) > 1 then
@@ -259,7 +258,6 @@ end
 local function smart_close()
 	local mode = vim.fn.mode()
 	local buftype = vim.bo.buftype
-	dprint("Mode:", mode, "Buftype:", buftype)
 
 
 	if mode == "c" then
@@ -301,9 +299,6 @@ local function smart_save()
 	if vim.bo.buftype ~= "" then
 		return -- cmdwin, terminal, quickfix, prompt, preview: nothing to write
 	end
-	if not vim.bo.modifiable or vim.bo.readonly then
-		return
-	end
 	if vim.api.nvim_buf_get_name(0) == "" then
 		vim.api.nvim_feedkeys(":saveas ", "n", false)
 		return
@@ -330,10 +325,6 @@ local function smart_save_quit()
 		vim.cmd("q") -- help, quickfix, cmdwin: close, never write
 		return
 	end
-	if not vim.bo.modifiable or vim.bo.readonly then
-		vim.cmd("q")
-		return
-	end
 	if vim.api.nvim_buf_get_name(0) == "" then
 		vim.cmd("q") -- unnamed scratch: :q refuses if modified, which is correct
 		return
@@ -347,22 +338,17 @@ local function delete_buffer()
 end
 
 local function smart_quit()
-	dprint("smart_quit activated")
 	if vim.fn.getcmdline() ~= "" then
-		dprint("commandline occupied")
 		return
 	end
 
 	local name = vim.api.nvim_buf_get_name(0)
-	dprint("smart_quit: buftype:", vim.bo.buftype, "name:", name)
 
 	if vim.bo.buftype == "terminal" then
 		-- Check window count right before closing (it might have changed)
 		if #vim.api.nvim_tabpage_list_wins(0) == 1 then
-			dprint("Last terminal window - quitting all")
 			vim.cmd("qa")
 		else
-			dprint("Closing terminal window")
 			pcall(vim.cmd.close) -- pcall to handle race condition
 		end
 		return
