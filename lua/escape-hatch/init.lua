@@ -308,7 +308,7 @@ local function smart_save()
 		vim.api.nvim_feedkeys(":saveas ", "n", false)
 		return
 	end
-	vim.api.nvim_echo({}, false, {})
+	vim.api.nvim_echo({ "" }, false, {})
 	vim.cmd(config.commands.save)
 end
 
