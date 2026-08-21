@@ -38,6 +38,7 @@ local default_config = {
 	-- Can be "auto", "nvim-cmp", "blink", "coq", "native", or a custom function
 	completion_engine = "auto",
 
+	plugin_enabled = true,
 
 	-- Any action name not handled natively falls through to this table and is
 	-- run as an ex command, so adding a new escalation step needs no new code.
@@ -342,6 +343,7 @@ local function smart_quit()
 	end
 
 	local name = vim.api.nvim_buf_get_name(0)
+	dprint("smart_quit: buftype:", vim.bo.buftype, "name:", name)
 
 	if vim.bo.buftype == "terminal" then
 		-- Check window count right before closing (it might have changed)
