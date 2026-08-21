@@ -261,14 +261,6 @@ local function smart_close()
 	local buftype = vim.bo.buftype
 	dprint("Mode:", mode, "Buftype:", buftype)
 
-	if vim.fn.getcmdwintype() ~= "" then
-		if mode ~= "n" then
-			vim.cmd("stopinsert")
-		else
-			vim.cmd("quit")
-		end
-		return true
-	end
 
 	if mode == "c" then
 		send_keys("<C-c>")
@@ -306,11 +298,13 @@ end
 ---------------------------------------------------------------------------
 
 local function smart_save()
+	if vim.bo.buftype ~= "" then
+		return -- cmdwin, terminal, quickfix, help: nothing to write
+	end
 	if vim.api.nvim_buf_get_name(0) == "" then
-		vim.api.nvim_feedkeys(":saveas ", "n", false) -- Unnamed buffer
+		vim.api.nvim_feedkeys(":saveas ", "n", false)
 	else
-		handle_terminal()
-		vim.cmd(config.commands.save) -- Normal file
+		vim.cmd(config.commands.save)
 	end
 end
 
@@ -386,7 +380,11 @@ local function run(action)
 
 	local cmd = config.commands[action]
 	if cmd then
-		return vim.cmd(cmd)
+		local ok, err = pcall(vim.cmd, cmd)
+		if not ok then
+			vim.notify(("escape-hatch: %s: %s"):format(action, err), vim.log.levels.WARN)
+		end
+		return
 	end
 
 	vim.notify("escape-hatch: unknown action " .. tostring(action), vim.log.levels.WARN)
@@ -413,6 +411,16 @@ end
 
 ---@param cmds table|nil Command list to escalate through; defaults to normal_commands
 function M.handle_escape(cmds)
+	if vim.fn.getcmdwintype() ~= "" then
+		if vim.fn.mode() ~= "n" then
+			vim.cmd("stopinsert")
+		else
+			vim.cmd("quit")
+		end
+		return
+	end
+
+
 	cmds = cmds or config.normal_commands
 	local level = bump(cmds)
 	if cmds[level] then
