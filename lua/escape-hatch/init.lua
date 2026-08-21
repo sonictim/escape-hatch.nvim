@@ -305,13 +305,11 @@ local function smart_save()
 		return
 	end
 	if vim.api.nvim_buf_get_name(0) == "" then
-		vim.notify("escape-hatch: no filename; use :saveas", vim.log.levels.WARN)
+		vim.api.nvim_feedkeys(":saveas ", "n", false)
 		return
 	end
-	local bt = vim.bo.buftype
-	local cwd = vim.inspect(vim.fn.getcwd())
-	local name = vim.inspect(vim.api.nvim_buf_get_name(0))
-
+	print(("SAVE bt=%q cwd=%s name=%s"):format(
+		vim.bo.buftype, vim.inspect(vim.fn.getcwd()), vim.inspect(vim.api.nvim_buf_get_name(0))))
 	vim.cmd(config.commands.save)
 end
 
