@@ -298,18 +298,18 @@ end
 ---------------------------------------------------------------------------
 
 local function smart_save()
+	if vim.bo.buftype ~= "" then
+		return -- cmdwin, terminal, quickfix, prompt, preview: nothing to write
+	end
+	if not vim.bo.modifiable or vim.bo.readonly then
+		return
+	end
 	if vim.api.nvim_buf_get_name(0) == "" then
-		last_press = 0 -- cancel the burst; the prompt owns the next <Esc>
-		vim.ui.input({ prompt = "Save as: ", completion = "file" }, function(name)
-			if name and name ~= "" then
-				vim.cmd("saveas " .. vim.fn.fnameescape(name))
-			end
-		end)
+		vim.notify("escape-hatch: no filename; use :saveas", vim.log.levels.WARN)
 		return
 	end
 	vim.cmd(config.commands.save)
 end
-
 local function smart_save_quit()
 	local name = vim.api.nvim_buf_get_name(0)
 	if vim.bo.buftype == "terminal" then
