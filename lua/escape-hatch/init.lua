@@ -308,6 +308,8 @@ local function smart_save()
 		vim.notify("escape-hatch: no filename; use :saveas", vim.log.levels.WARN)
 		return
 	end
+	print(("SAVE bt=%q cwd=%s name=%s"):format(
+		vim.bo.buftype, vim.inspect(vim.fn.getcwd()), vim.inspect(vim.api.nvim_buf_get_name(0))))
 	vim.cmd(config.commands.save)
 end
 local function smart_save_quit()
