@@ -313,7 +313,7 @@ local function smart_save()
 	-- local _ = vim.api.nvim_buf_get_name(0)
 	-- print("SAVE")
 	-- vim.cmd("redraw")
-	vim.api.nvim_echo({ { "SA" } }, false, {})
+	vim.api.nvim_echo({ { "" } }, false, {})
 	vim.cmd(config.commands.save)
 end
 
