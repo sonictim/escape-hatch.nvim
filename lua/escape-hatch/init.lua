@@ -304,14 +304,14 @@ local function smart_save()
 	if not vim.bo.modifiable or vim.bo.readonly then
 		return
 	end
-	if vim.api.nvim_buf_get_name(0) == "" then
-		vim.notify("escape-hatch: no filename; use :saveas", vim.log.levels.WARN)
+	local name = vim.api.nvim_buf_get_name(0)
+	if name == "" or name:find("%c") or vim.fn.strchars(name, 1) < 0 then
+		vim.notify("escape-hatch: refusing to write " .. vim.inspect(name), vim.log.levels.WARN)
 		return
 	end
-	print(("SAVE bt=%q cwd=%s name=%s"):format(
-		vim.bo.buftype, vim.inspect(vim.fn.getcwd()), vim.inspect(vim.api.nvim_buf_get_name(0))))
 	vim.cmd(config.commands.save)
 end
+
 local function smart_save_quit()
 	local name = vim.api.nvim_buf_get_name(0)
 	if vim.bo.buftype == "terminal" then
