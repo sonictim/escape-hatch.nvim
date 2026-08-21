@@ -308,21 +308,38 @@ local function smart_save()
 		vim.api.nvim_feedkeys(":saveas ", "n", false)
 		return
 	end
-	--WEIRD neovim v0.13dev issue
+	-- WORKAROUND(nvim 0.13-dev): without a message emitted here, :write can
+	-- target a garbage filename (contents of unrelated internal strings, e.g.
+	-- 'cinkeys' or a keymap desc) and fail with E212 EILSEQ. An empty-chunk
+	-- nvim_echo is sufficient; :redraw and nvim_buf_get_name are not.
+	-- 0.12.4 unaffected. See <issue URL>. Remove when fixed upstream.
 	vim.api.nvim_echo({ { "" } }, false, {})
 	vim.cmd(config.commands.save)
 end
 
 local function smart_save_quit()
-	local name = vim.api.nvim_buf_get_name(0)
 	if vim.bo.buftype == "terminal" then
-		vim.cmd.close()
+		if #vim.api.nvim_tabpage_list_wins(0) == 1 then
+			vim.cmd("qa")
+		else
+			pcall(vim.cmd.close)
+		end
+		return
 	end
-	if name == "" and vim.bo.buftype == "" then
+	if vim.bo.buftype ~= "" then
+		vim.cmd("q") -- help, quickfix, cmdwin: close, never write
+		return
+	end
+	if not vim.bo.modifiable or vim.bo.readonly then
 		vim.cmd("q")
-	else
-		vim.cmd(config.commands.save_quit)
+		return
 	end
+	if vim.api.nvim_buf_get_name(0) == "" then
+		vim.cmd("q") -- unnamed scratch: :q refuses if modified, which is correct
+		return
+	end
+	vim.api.nvim_echo({ { "" } }, false, {}) -- see WORKAROUND in smart_save
+	vim.cmd(config.commands.save_quit)
 end
 
 local function delete_buffer()
