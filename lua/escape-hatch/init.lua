@@ -308,11 +308,7 @@ local function smart_save()
 		vim.api.nvim_feedkeys(":saveas ", "n", false)
 		return
 	end
-	-- Workaround: 0.13-dev corrupts the write target unless a message is
-	-- emitted first. See <issue link>. Remove when fixed upstream.
-	if vim.fn.has("nvim-0.13") == 1 then
-		vim.api.nvim_echo({}, false, {})
-	end
+	vim.api.nvim_echo({}, false, {})
 	vim.cmd(config.commands.save)
 end
 
