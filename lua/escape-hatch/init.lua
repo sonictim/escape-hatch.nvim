@@ -313,7 +313,7 @@ local function smart_save()
 	-- 'cinkeys' or a keymap desc) and fail with E212 EILSEQ. An empty-chunk
 	-- nvim_echo is sufficient; :redraw and nvim_buf_get_name are not.
 	-- 0.12.4 unaffected. See <issue URL>. Remove when fixed upstream.
-	vim.api.nvim_echo({ { "" } }, false, {})
+	-- vim.api.nvim_echo({ { "" } }, false, {})
 	vim.cmd(config.commands.save)
 end
 
