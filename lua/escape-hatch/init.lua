@@ -38,7 +38,6 @@ local default_config = {
 	-- Can be "auto", "nvim-cmp", "blink", "coq", "native", or a custom function
 	completion_engine = "auto",
 
-	plugin_enabled = true,
 
 	-- Any action name not handled natively falls through to this table and is
 	-- run as an ex command, so adding a new escalation step needs no new code.
@@ -296,13 +295,13 @@ end
 ---------------------------------------------------------------------------
 
 local function smart_save()
-	if vim.bo.buftype ~= "" then
-		return -- cmdwin, terminal, quickfix, prompt, preview: nothing to write
-	end
-	if vim.api.nvim_buf_get_name(0) == "" then
-		vim.api.nvim_feedkeys(":saveas ", "n", false)
-		return
-	end
+	-- if vim.bo.buftype ~= "" then
+	-- 	return -- cmdwin, terminal, quickfix, prompt, preview: nothing to write
+	-- end
+	-- if vim.api.nvim_buf_get_name(0) == "" then
+	-- 	vim.api.nvim_feedkeys(":saveas ", "n", false)
+	-- 	return
+	-- end
 	-- WORKAROUND(nvim 0.13-dev): without a message emitted here, :write can
 	-- target a garbage filename (contents of unrelated internal strings, e.g.
 	-- 'cinkeys' or a keymap desc) and fail with E212 EILSEQ. An empty-chunk
