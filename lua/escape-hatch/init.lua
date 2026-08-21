@@ -298,14 +298,16 @@ end
 ---------------------------------------------------------------------------
 
 local function smart_save()
-	if vim.bo.buftype ~= "" then
-		return -- cmdwin, terminal, quickfix, help: nothing to write
-	end
 	if vim.api.nvim_buf_get_name(0) == "" then
-		vim.api.nvim_feedkeys(":saveas ", "n", false)
-	else
-		vim.cmd(config.commands.save)
+		last_press = 0 -- cancel the burst; the prompt owns the next <Esc>
+		vim.ui.input({ prompt = "Save as: ", completion = "file" }, function(name)
+			if name and name ~= "" then
+				vim.cmd("saveas " .. vim.fn.fnameescape(name))
+			end
+		end)
+		return
 	end
+	vim.cmd(config.commands.save)
 end
 
 local function smart_save_quit()
