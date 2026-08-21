@@ -4,9 +4,13 @@
 
 local M = {}
 
+local uv = vim.uv or vim.loop
+
+-- Burst state: instead of a libuv timer resetting a counter, we compare
+-- timestamps. Same behavior, no handle lifecycle to get wrong.
 local counter = 0
-local timer = nil
-local current_mode = "normal" -- Track which command set we're using
+local last_press = 0
+local last_cmds = nil
 
 -- Default configuration
 local default_config = {
@@ -14,19 +18,20 @@ local default_config = {
 	handle_completion_popups = false,
 	normal_mode = true,
 	leader_mode = true,
-	timeout = 500, -- Timer timeout in milliseconds for split mode
+	timeout = 500, -- How long a burst of escapes stays "connected", in ms
 	telescope_full_quit = true,
+
 	normal_commands = {
 		[1] = "smart_close", -- First escape: clear UI/exit modes
-		[2] = "save", -- Second escape: save
-		[3] = "quit", -- Third escape: quit
+		[2] = "save",  -- Second escape: save
+		[3] = "quit",  -- Third escape: quit
 		[4] = "quit_all",
 	},
 	leader_commands = {
 		[1] = "escape",
-		[2] = "delete_buffer", -- First leader+escape: quit
-		[3] = "force_quit_current", -- Second: quit all
-		[4] = "force_quit_all", -- Third: force quit all
+		[2] = "delete_buffer",
+		[3] = "force_quit_current",
+		[4] = "force_quit_all",
 	},
 
 	-- Completion engine detection (auto-detects common engines)
@@ -34,14 +39,16 @@ local default_config = {
 	completion_engine = "auto",
 
 	plugin_enabled = true,
-	-- Custom commands (optional overrides)
+
+	-- Any action name not handled natively falls through to this table and is
+	-- run as an ex command, so adding a new escalation step needs no new code.
 	commands = {
-		save = "w", -- Changed from ":w<CR>" to just "w"
-		save_quit = "wq", -- Changed from ":wq<CR>" to just "wq"
-		quit = "q", -- Changed from ":q<CR>" to just "q"
-		quit_all = "qa", -- Changed from ":qa<CR>" to just "qa"
+		save = "w",
+		save_quit = "wq",
+		quit = "q",
+		quit_all = "qa",
 		force_quit_current = "q!",
-		force_quit_all = "qa!", -- Changed from ":qa!<CR>" to just "qa!"
+		force_quit_all = "qa!",
 		exit_terminal = "<C-\\><C-n>", -- Options: "<C-\\><C-n>", "hide", "close"
 		delete_buffer = "bd",
 	},
@@ -55,76 +62,37 @@ local default_config = {
 		"dashboard", -- Dashboard
 		"trouble", -- Trouble diagnostics
 		"which%-key", -- Which-key popup (usually auto-closes)
-		-- Users can add more patterns here
 	},
 
 	debug = false,
 }
 
+-- List-valued options are replaced wholesale rather than merged index-by-index,
+-- so `normal_commands = { "smart_close", "quit" }` means exactly that.
+local replace_keys = {
+	preserve_buffers = true,
+	normal_commands = true,
+	leader_commands = true,
+}
+
 local config = {}
+
+---------------------------------------------------------------------------
+-- helpers
+---------------------------------------------------------------------------
 
 local function dprint(...)
 	if config.debug then
 		print(...)
 	end
 end
+
 local function send_keys(keys)
 	vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(keys, true, false, true), "n", false)
 end
+
 local function escape()
 	send_keys("<Esc>")
-end
-
--- Returns true if telescope is installed (doesn't error if not)
-local function telescope_available()
-	return pcall(require, "telescope")
-end
-
-local function completion_active()
-	-- If user provided a custom function, use it
-	if type(config.completion_engine) == "function" then
-		return config.completion_engine()
-	end
-
-	-- Handle specific engines
-	if config.completion_engine == "native" then
-		return vim.fn.pumvisible() == 1
-	elseif config.completion_engine == "nvim-cmp" then
-		local ok, cmp = pcall(require, "cmp")
-		return ok and cmp.visible()
-	elseif config.completion_engine == "blink" then
-		local ok, blink = pcall(require, "blink.cmp")
-		return ok and blink.is_visible()
-	elseif config.completion_engine == "coq" then
-		local ok, coq = pcall(require, "coq")
-		return ok and coq.is_visible()
-	else
-		-- Auto-detect (default behavior)
-		-- Check for native completion
-		if vim.fn.pumvisible() == 1 then
-			return true
-		end
-
-		-- Check for nvim-cmp (if installed)
-		local ok, cmp = pcall(require, "cmp")
-		if ok and cmp.visible() then
-			return true
-		end
-
-		-- Check for blink.cmp (if installed)
-		local ok_blink, blink = pcall(require, "blink.cmp")
-		if ok_blink and blink.is_visible() then
-			return true
-		end
-
-		-- Check for coq_nvim (if installed)
-		local ok_coq, coq = pcall(require, "coq")
-		if ok_coq and coq.is_visible() then
-			return true
-		end
-
-		return false
-	end
 end
 
 local function preserve_buffer(buf_name, buf_type)
@@ -138,10 +106,56 @@ local function preserve_buffer(buf_name, buf_type)
 	return false
 end
 
--- Close any active Telescope picker, regardless of which Telescope window is focused.
--- Returns true if it closed something, false otherwise.
+---------------------------------------------------------------------------
+-- completion engines
+---------------------------------------------------------------------------
+
+-- One entry per engine. "auto" just probes every entry, so an engine is
+-- described once instead of twice.
+local engines = {
+	native = function()
+		return vim.fn.pumvisible() == 1
+	end,
+	["nvim-cmp"] = function()
+		local ok, cmp = pcall(require, "cmp")
+		return ok and cmp.visible()
+	end,
+	blink = function()
+		local ok, blink = pcall(require, "blink.cmp")
+		return ok and blink.is_visible()
+	end,
+	coq = function()
+		local ok, coq = pcall(require, "coq")
+		return ok and coq.is_visible()
+	end,
+}
+
+local function completion_active()
+	local engine = config.completion_engine
+
+	if type(engine) == "function" then
+		return engine()
+	end
+	if engines[engine] then
+		return engines[engine]()
+	end
+
+	for _, probe in pairs(engines) do
+		if probe() then
+			return true
+		end
+	end
+	return false
+end
+
+---------------------------------------------------------------------------
+-- window / buffer closing
+---------------------------------------------------------------------------
+
+-- Close any active Telescope picker, regardless of which Telescope window is
+-- focused. Returns true if it closed something.
 local function telescope_close_any()
-	if not telescope_available() then
+	if not package.loaded["telescope"] then
 		return false
 	end
 	local ok_actions, actions = pcall(require, "telescope.actions")
@@ -172,39 +186,38 @@ local function telescope_close_any()
 		vim.schedule(function()
 			actions.close(picker.prompt_bufnr)
 		end)
-		return true
 	else
 		escape()
-		return true
 	end
+	return true
 end
+
 local function close_floating_windows()
-	local r = false
-	for _, win in ipairs(vim.api.nvim_list_wins()) do
+	local closed = false
+	for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
 		local win_config = vim.api.nvim_win_get_config(win)
 		if win_config.relative ~= "" then
 			local buf = vim.api.nvim_win_get_buf(win)
-			local ft = vim.bo[buf].filetype
-			if not preserve_buffer(vim.api.nvim_buf_get_name(buf), ft) then
+			if not preserve_buffer(vim.api.nvim_buf_get_name(buf), vim.bo[buf].filetype) then
 				vim.api.nvim_win_close(win, true)
-				r = true
+				closed = true
 			end
 		end
 	end
-	return r
+	return closed
 end
 
 local function handle_terminal()
-	local mode = vim.fn.mode()
-	local wins = vim.api.nvim_list_wins()
-	local comm = config.commands.exit_terminal
 	if vim.bo.buftype ~= "terminal" then
 		return false
 	end
 
+	local mode = vim.fn.mode()
+	local comm = config.commands.exit_terminal
 	dprint("Terminal Path")
+
 	if mode == "n" or comm == "hide" or comm == "close" then
-		if #wins > 1 then
+		if #vim.api.nvim_tabpage_list_wins(0) > 1 then
 			if comm == "hide" then
 				vim.cmd.hide()
 			else
@@ -216,70 +229,85 @@ local function handle_terminal()
 	else
 		send_keys(comm)
 	end
-
 	return true
 end
+
+local function close_special_buffers(buftype)
+	local closed = false
+
+	if config.close_all_special_buffers then
+		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+			local bt = vim.bo[buf].buftype
+			if vim.api.nvim_buf_is_loaded(buf) and bt ~= "" and bt ~= "terminal" then
+				if not preserve_buffer(vim.api.nvim_buf_get_name(buf), bt) then
+					vim.api.nvim_buf_delete(buf, { force = true })
+					closed = true
+				end
+			end
+		end
+	elseif buftype ~= "" and buftype ~= "terminal" then
+		if not preserve_buffer(vim.api.nvim_buf_get_name(0), buftype) then
+			vim.api.nvim_buf_delete(0, { force = true })
+			closed = true
+		end
+	end
+
+	return closed
+end
+
 
 local function smart_close()
 	local mode = vim.fn.mode()
 	local buftype = vim.bo.buftype
-	dprint("Mode:", mode, "Bufftype:", vim.bo.buftype)
+	dprint("Mode:", mode, "Buftype:", buftype)
+
+	if vim.fn.getcmdwintype() ~= "" then
+		if mode ~= "n" then
+			vim.cmd("stopinsert")
+		else
+			vim.cmd("quit")
+		end
+		return true
+	end
 
 	if mode == "c" then
 		send_keys("<C-c>")
 		return true
 	end
-	if config.handle_completion_popups and vim.fn.mode() == "i" and completion_active() then
-		dprint("Completion path")
+	if config.handle_completion_popups and mode == "i" and completion_active() then
 		close_floating_windows()
 		return true
 	end
 	if telescope_close_any() then
-		dprint("Telescope path")
 		return true
 	end
-	local r = close_floating_windows()
+
+	-- Sweep, then keep going: a float closing shouldn't block a terminal/mode exit.
+	local closed = close_floating_windows()
+
 	if handle_terminal() then
 		return true
 	end
-	if mode == "v" or mode == "V" or mode == "\22" then -- visual, visual-line, visual-block
-		dprint("Visual Path")
+	if mode == "v" or mode == "V" or mode == "\22" then
 		escape()
 		return true
 	elseif mode ~= "n" then
-		dprint("Insert Path")
 		vim.cmd("stopinsert")
 		return true
 	end
-	if config.close_all_special_buffers then
-		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-			if vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].buftype ~= "" then
-				local name = vim.api.nvim_buf_get_name(buf)
-				-- print(name)
-				if not preserve_buffer(name, vim.bo[buf].buftype) and vim.bo[buf].buftype ~= "terminal" then
-					vim.api.nvim_buf_delete(buf, { force = true })
-					r = true
-				end
-			end
-		end
-	else
-		-- Close current buffer if it's special
-		if buftype ~= "" and buftype ~= "terminal" then
-			local name = vim.api.nvim_buf_get_name(0)
-			if not preserve_buffer(name, vim.bo.buftype) then
-				vim.api.nvim_buf_delete(0, { force = true })
-				r = true
-			end
-		end
-	end
+
+	closed = close_special_buffers(buftype) or closed
 	vim.cmd("nohlsearch")
-	return r
+	return closed
 end
 
+---------------------------------------------------------------------------
+-- save / quit actions
+---------------------------------------------------------------------------
+
 local function smart_save()
-	local name = vim.api.nvim_buf_get_name(0)
-	if name == "" then
-		vim.api.nvim_feedkeys(":" .. "saveas ", "c", false) -- Unnamed buffer
+	if vim.api.nvim_buf_get_name(0) == "" then
+		vim.api.nvim_feedkeys(":saveas ", "n", false) -- Unnamed buffer
 	else
 		handle_terminal()
 		vim.cmd(config.commands.save) -- Normal file
@@ -299,143 +327,152 @@ local function smart_save_quit()
 end
 
 local function delete_buffer()
-	vim.cmd(config.commands.delete_buffer) -- Normal file
+	vim.cmd(config.commands.delete_buffer)
 end
+
 local function smart_quit()
 	dprint("smart_quit activated")
-	dprint(vim.fn.getcmdline())
 	if vim.fn.getcmdline() ~= "" then
 		dprint("commandline occupied")
 		return
 	end
+
 	local name = vim.api.nvim_buf_get_name(0)
-	local num_wins = #vim.api.nvim_list_wins()
-	dprint("smart_quit: buftype:", vim.bo.buftype, "num_wins:", num_wins, "name:", name)
+	dprint("smart_quit: buftype:", vim.bo.buftype, "name:", name)
 
 	if vim.bo.buftype == "terminal" then
 		-- Check window count right before closing (it might have changed)
-		local current_wins = #vim.api.nvim_list_wins()
-		if current_wins == 1 then
+		if #vim.api.nvim_tabpage_list_wins(0) == 1 then
 			dprint("Last terminal window - quitting all")
 			vim.cmd("qa")
-			return
 		else
-			dprint("Closing terminal window (current wins:", current_wins, ")")
-			pcall(vim.cmd.close) -- Use pcall to handle race condition
-			return
+			dprint("Closing terminal window")
+			pcall(vim.cmd.close) -- pcall to handle race condition
 		end
+		return
 	end
+
 	if name == "" and vim.bo.buftype == "" then
 		vim.cmd("q")
 	else
 		vim.cmd(config.commands.quit)
 	end
 end
-vim.api.nvim_create_user_command("TelescopeClose", function()
-	if not telescope_close_any() then
-		vim.notify("No Telescope picker to close", vim.log.levels.INFO)
-	end
-end, {})
--- set up keymaps based on configuration
-local function setup_keymaps()
-	if not config.plugin_enabled then
-		return
+
+---------------------------------------------------------------------------
+-- dispatch
+---------------------------------------------------------------------------
+
+-- Named actions with real logic. Anything else is looked up in
+-- config.commands and run as an ex command.
+local actions = {
+	smart_close = smart_close,
+	escape = escape,
+	save = smart_save,
+	save_quit = smart_save_quit,
+	quit = smart_quit,
+	delete_buffer = delete_buffer,
+}
+
+local function run(action)
+	if type(action) == "function" then
+		return action()
 	end
 
+	local fn = actions[action]
+	if fn then
+		return fn()
+	end
+
+	local cmd = config.commands[action]
+	if cmd then
+		return vim.cmd(cmd)
+	end
+
+	vim.notify("escape-hatch: unknown action " .. tostring(action), vim.log.levels.WARN)
+end
+
+
+-- Advance the burst counter, restarting if the last press was too long ago or
+-- came from a different command list.
+local function bump(cmds)
+	local now = uv.now()
+	if cmds ~= last_cmds or (now - last_press) > config.timeout then
+		counter = 1
+	else
+		counter = counter + 1
+	end
+	last_press = now
+	last_cmds = cmds
+	return counter
+end
+
+---------------------------------------------------------------------------
+-- public API
+---------------------------------------------------------------------------
+
+---@param cmds table|nil Command list to escalate through; defaults to normal_commands
+function M.handle_escape(cmds)
+	cmds = cmds or config.normal_commands
+	local level = bump(cmds)
+	if cmds[level] then
+		run(cmds[level])
+	end
+end
+
+-- Toggle whether <Esc> dismisses completion popups
+function M.toggle_completion_popups()
+	config.handle_completion_popups = not config.handle_completion_popups
+	print("Close completion popups " .. (config.handle_completion_popups and "enabled" or "disabled"))
+end
+
+---------------------------------------------------------------------------
+-- setup
+---------------------------------------------------------------------------
+
+local escape_modes = { "n", "i", "v", "t", "x", "c" }
+local leader_modes = { "n", "v" }
+
+local function setup_keymaps()
 	if config.normal_mode then
-		vim.keymap.set({ "n", "i", "v", "t", "x", "c" }, "<Esc>", function()
+		vim.keymap.set(escape_modes, "<Esc>", function()
 			M.handle_escape()
 		end, { desc = "Escape Hatch" })
 	end
 	if config.leader_mode then
-		vim.keymap.set({ "n", "i", "v", "t", "x", "c" }, "<leader><Esc>", function()
-			M.handle_leader_escape()
+		vim.keymap.set(leader_modes, "<leader><Esc>", function()
+			M.handle_escape(config.leader_commands)
 		end, { desc = "Escape Hatch Quit without Save" })
 	end
 end
 
-local function execute_commands(command_type, level)
-	if command_type == "smart_close" then
-		smart_close()
-	elseif command_type == "escape" then
-		escape()
-	elseif command_type == "save" then
-		smart_save()
-	elseif command_type == "save_quit" then
-		smart_save_quit()
-	elseif command_type == "delete_buffer" then
-		delete_buffer()
-	elseif command_type == "quit" then
-		smart_quit()
-	elseif command_type == "quit_all" then
-		vim.cmd(config.commands.quit_all)
-	elseif command_type == "force_quit_current" then
-		vim.cmd(config.commands.force_quit_current)
-	elseif command_type == "force_quit_all" then
-		vim.cmd(config.commands.force_quit_all)
-	elseif type(command_type) == "function" then
-		command_type()
-	end
-end
+local function merge_config(user)
+	user = user or {}
+	local merged = vim.tbl_deep_extend("force", default_config, user)
 
-function M.handle_escape()
-	counter = counter + 1
-
-	-- Execute command based on current mode
-	local cmds = (current_mode == "leader") and config.leader_commands or config.normal_commands
-	if cmds[counter] then
-		execute_commands(cmds[counter], counter)
+	for key in pairs(replace_keys) do
+		if user[key] ~= nil then
+			merged[key] = vim.deepcopy(user[key])
+		end
 	end
 
-	-- Clear existing timer
-	if timer then
-		timer:stop()
-		timer:close()
-	end
-
-	-- Set new timer to reset counter and mode
-	timer = vim.loop.new_timer()
-	timer:start(config.timeout, 0, function()
-		counter = 0
-		current_mode = "normal" -- Reset to normal mode
-		timer:close()
-		timer = nil
-	end)
+	return merged
 end
 
-function M.handle_leader_escape()
-	current_mode = "leader"
-	M.handle_escape()
-end
-
-function M.get_count()
-	return counter
-end
-
-function M.reset_counter()
-	counter = 0
-	current_mode = "normal"
-	if timer then
-		timer:stop()
-		timer:close()
-		timer = nil
-	end
-end
-
--- Main setup function
 function M.setup(user_config)
-	-- Merge user config with defaults
-	config = vim.tbl_deep_extend("force", default_config, user_config or {})
+	config = merge_config(user_config)
+
+	if not config.plugin_enabled then
+		return
+	end
+
+	vim.api.nvim_create_user_command("TelescopeClose", function()
+		if not telescope_close_any() then
+			vim.notify("No Telescope picker to close", vim.log.levels.INFO)
+		end
+	end, {})
 
 	setup_keymaps()
-end
-
--- Utility function to toggle close_all_special_buffers option
-function M.toggle_completion_popups()
-	config.handle_completion_popups = not config.handle_completion_popups
-
-	local status = config.handle_completion_popups and "enabled" or "disabled"
-	print("Close completion popups " .. status)
 end
 
 return M
