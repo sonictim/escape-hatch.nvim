@@ -308,12 +308,11 @@ local function smart_save()
 		vim.api.nvim_feedkeys(":saveas ", "n", false)
 		return
 	end
-	-- print(("SAVE bt=%q cwd=%s name=%s"):format(
-	-- 	vim.bo.buftype, vim.inspect(vim.fn.getcwd()), vim.inspect(vim.api.nvim_buf_get_name(0))))
-	-- local _ = vim.api.nvim_buf_get_name(0)
-	-- print("SAVE")
-	-- vim.cmd("redraw")
-	vim.api.nvim_echo({ { "SAVE" } }, false, {})
+	-- Workaround: 0.13-dev corrupts the write target unless a message is
+	-- emitted first. See <issue link>. Remove when fixed upstream.
+	if vim.fn.has("nvim-0.13") == 1 then
+		vim.api.nvim_echo({}, false, {})
+	end
 	vim.cmd(config.commands.save)
 end
 
