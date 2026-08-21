@@ -308,7 +308,12 @@ local function smart_save()
 		vim.api.nvim_feedkeys(":saveas ", "n", false)
 		return
 	end
-	vim.api.nvim_echo({ "" }, false, {})
+	-- print(("SAVE bt=%q cwd=%s name=%s"):format(
+	-- 	vim.bo.buftype, vim.inspect(vim.fn.getcwd()), vim.inspect(vim.api.nvim_buf_get_name(0))))
+	-- local _ = vim.api.nvim_buf_get_name(0)
+	-- print("SAVE")
+	-- vim.cmd("redraw")
+	vim.api.nvim_echo({ { "SA" } }, false, {})
 	vim.cmd(config.commands.save)
 end
 
