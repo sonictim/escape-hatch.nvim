@@ -180,10 +180,7 @@ local function telescope_close_any()
 	end
 
 	if config.telescope_full_quit then
-		-- Schedule to be safe from insert-mode context
-		vim.schedule(function()
-			actions.close(picker.prompt_bufnr)
-		end)
+		actions.close(picker.prompt_bufnr)
 	else
 		escape()
 	end
@@ -270,7 +267,6 @@ local function smart_close()
 		return true
 	end
 
-	-- Sweep, then keep going: a float closing shouldn't block a terminal/mode exit.
 	local closed = close_floating_windows()
 
 	if handle_terminal() then
@@ -298,15 +294,14 @@ local function smart_save()
 		return -- cmdwin, terminal, quickfix, prompt, preview: nothing to write
 	end
 	if vim.api.nvim_buf_get_name(0) == "" then
-		vim.api.nvim_feedkeys(":saveas ", "n", false)
+		last_press = 0 -- cancel the burst; the prompt owns the next <Esc>
+		vim.ui.input({ prompt = "Save as: ", completion = "file" }, function(name)
+			if name and name ~= "" then
+				vim.cmd("saveas " .. vim.fn.fnameescape(vim.fn.expand(name)))
+			end
+		end)
 		return
 	end
-	-- WORKAROUND(nvim 0.13-dev): without a message emitted here, :write can
-	-- target a garbage filename (contents of unrelated internal strings, e.g.
-	-- 'cinkeys' or a keymap desc) and fail with E212 EILSEQ. An empty-chunk
-	-- nvim_echo is sufficient; :redraw and nvim_buf_get_name are not.
-	-- 0.12.4 unaffected. See <issue URL>. Remove when fixed upstream.
-	-- vim.api.nvim_echo({ { "" } }, false, {})
 	vim.cmd(config.commands.save)
 end
 
