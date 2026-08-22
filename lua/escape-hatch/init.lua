@@ -16,8 +16,6 @@ local last_cmds = nil
 local default_config = {
 	close_all_special_buffers = false,
 	handle_completion_popups = false,
-	normal_mode = true,
-	leader_mode = true,
 	timeout = 500, -- How long a burst of escapes stays "connected", in ms
 	telescope_full_quit = true,
 
@@ -451,12 +449,12 @@ local escape_modes = { "n", "i", "v", "t", "x", "c" }
 local leader_modes = { "n", "v" }
 
 local function setup_keymaps()
-	if config.normal_mode then
+	if #config.normal_commands > 0 then
 		vim.keymap.set(escape_modes, "<Esc>", function()
 			M.handle_escape()
 		end, { desc = "Escape Hatch" })
 	end
-	if config.leader_mode then
+	if #config.leader_commands > 0 then
 		vim.keymap.set(leader_modes, "<leader><Esc>", function()
 			M.handle_escape(config.leader_commands)
 		end, { desc = "Escape Hatch Quit without Save" })
