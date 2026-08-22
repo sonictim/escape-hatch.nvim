@@ -16,8 +16,6 @@ local last_cmds = nil
 local default_config = {
 	close_all_special_buffers = false,
 	handle_completion_popups = false,
-	normal_mode = true,
-	leader_mode = true,
 	timeout = 500, -- How long a burst of escapes stays "connected", in ms
 	telescope_full_quit = true,
 
@@ -38,7 +36,6 @@ local default_config = {
 	-- Can be "auto", "nvim-cmp", "blink", "coq", "native", or a custom function
 	completion_engine = "auto",
 
-	plugin_enabled = true,
 
 	-- Any action name not handled natively falls through to this table and is
 	-- run as an ex command, so adding a new escalation step needs no new code.
@@ -451,12 +448,12 @@ local escape_modes = { "n", "i", "v", "t", "x", "c" }
 local leader_modes = { "n", "v" }
 
 local function setup_keymaps()
-	if config.normal_mode then
+	if config.normal_commands.size > 0 then
 		vim.keymap.set(escape_modes, "<Esc>", function()
 			M.handle_escape()
 		end, { desc = "Escape Hatch" })
 	end
-	if config.leader_mode then
+	if config.leader_commands.size > 0 then
 		vim.keymap.set(leader_modes, "<leader><Esc>", function()
 			M.handle_escape(config.leader_commands)
 		end, { desc = "Escape Hatch Quit without Save" })
@@ -478,10 +475,6 @@ end
 
 function M.setup(user_config)
 	config = merge_config(user_config)
-
-	if not config.plugin_enabled then
-		return
-	end
 
 	vim.api.nvim_create_user_command("TelescopeClose", function()
 		if not telescope_close_any() then
