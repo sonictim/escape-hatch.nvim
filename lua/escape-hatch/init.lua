@@ -296,13 +296,13 @@ end
 ---------------------------------------------------------------------------
 
 local function smart_save()
-	-- if vim.bo.buftype ~= "" then
-	-- 	return -- cmdwin, terminal, quickfix, prompt, preview: nothing to write
-	-- end
-	-- if vim.api.nvim_buf_get_name(0) == "" then
-	-- 	vim.api.nvim_feedkeys(":saveas ", "n", false)
-	-- 	return
-	-- end
+	if vim.bo.buftype ~= "" then
+		return -- cmdwin, terminal, quickfix, prompt, preview: nothing to write
+	end
+	if vim.api.nvim_buf_get_name(0) == "" then
+		vim.api.nvim_feedkeys(":saveas ", "n", false)
+		return
+	end
 	-- WORKAROUND(nvim 0.13-dev): without a message emitted here, :write can
 	-- target a garbage filename (contents of unrelated internal strings, e.g.
 	-- 'cinkeys' or a keymap desc) and fail with E212 EILSEQ. An empty-chunk
